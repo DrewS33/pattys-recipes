@@ -29,7 +29,6 @@ export type ProteinType =
   | 'Seafood'
   | 'Pasta'
   | 'Soup'
-  | 'Breakfast'
   | 'Vegetarian'
   | 'Other';
 
@@ -122,5 +121,6 @@ export interface Filters {
   proteinType: ProteinType | 'All';
   mealType: MealType | 'All';
   maxTime: number | null; // max total time in minutes
+  minTime: number | null; // min total time in minutes (for "over X" filter)
   favoritesOnly: boolean;
 }

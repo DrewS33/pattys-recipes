@@ -23,7 +23,7 @@ interface AddEditRecipeProps {
 const DIFFICULTY_OPTIONS: DifficultyLevel[] = ['Easy', 'Medium', 'Hard'];
 const PROTEIN_OPTIONS: ProteinType[] = [
   'Chicken', 'Beef', 'Pork', 'Turkey', 'Seafood',
-  'Pasta', 'Soup', 'Breakfast', 'Other',
+  'Pasta', 'Soup', 'Vegetarian', 'Other',
 ];
 const MEAL_TYPE_OPTIONS: MealType[] = [
   'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Side Dish',

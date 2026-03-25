@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { Recipe, SelectedRecipe, Filters, MealPlan } from './types';
-import { sampleRecipes } from './data/recipes';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
@@ -22,6 +21,7 @@ const DEFAULT_FILTERS: Filters = {
   proteinType: 'All',
   mealType: 'All',
   maxTime: null,
+  minTime: null,
   favoritesOnly: false,
 };
 
@@ -34,7 +34,7 @@ export default function App() {
   // ---- Persisted state (localStorage) ----
 
   // Recipes list — seeded with sample data on first visit
-  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes', sampleRecipes);
+  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes', []);
 
   // Selected recipes for shopping list
   const [selectedRecipes, setSelectedRecipes] = useLocalStorage<SelectedRecipe[]>(
@@ -97,6 +97,7 @@ export default function App() {
         if (filters.proteinType !== 'All' && r.proteinType !== filters.proteinType) return false;
         if (filters.mealType !== 'All' && r.mealType !== filters.mealType) return false;
         if (filters.maxTime !== null && r.totalTimeMinutes > filters.maxTime) return false;
+        if (filters.minTime !== null && r.totalTimeMinutes <= filters.minTime) return false;
         if (filters.favoritesOnly && !favoriteSet.has(r.id)) return false;
 
         return true;
@@ -368,7 +369,7 @@ export default function App() {
               {/* Recipe grid */}
               {renderRecipeGrid(
                 filteredRecipes,
-                filters.search || filters.difficulty !== 'All' || filters.proteinType !== 'All' || filters.mealType !== 'All' || filters.maxTime !== null || filters.favoritesOnly
+                filters.search || filters.difficulty !== 'All' || filters.proteinType !== 'All' || filters.mealType !== 'All' || filters.maxTime !== null || filters.minTime !== null || filters.favoritesOnly
                   ? 'Try adjusting your filters to find what you\'re looking for.'
                   : 'No recipes yet. Click "Add Recipe" to get started!'
               )}

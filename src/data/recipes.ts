@@ -866,7 +866,7 @@ export const sampleRecipes: Recipe[] = [
     totalTimeMinutes: 30,
     defaultServings: 4,
     tags: ['breakfast', 'weekend', 'kid-friendly', 'vegetarian', 'classic'],
-    proteinType: 'Breakfast',
+    proteinType: 'Other',
     mealType: 'Breakfast',
     favorite: false,
     notes:

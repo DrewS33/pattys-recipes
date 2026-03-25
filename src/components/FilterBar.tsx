@@ -25,7 +25,6 @@ const PROTEIN_OPTIONS: Array<{ value: ProteinType | 'All'; label: string }> = [
   { value: 'Seafood', label: '🦐 Seafood' },
   { value: 'Pasta', label: '🍝 Pasta' },
   { value: 'Soup', label: '🍲 Soup' },
-  { value: 'Breakfast', label: '🥞 Breakfast' },
   { value: 'Other', label: '🍴 Other' },
 ];
 
@@ -44,7 +43,6 @@ const TIME_OPTIONS: Array<{ value: number | null; label: string }> = [
   { value: 30, label: '⚡ Under 30 min' },
   { value: 45, label: '🕐 Under 45 min' },
   { value: 60, label: '🕑 Under 1 hr' },
-  { value: 90, label: '🕙 Under 90 min' },
 ];
 
 export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
@@ -58,6 +56,7 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
     filters.proteinType !== 'All' ||
     filters.mealType !== 'All' ||
     filters.maxTime !== null ||
+    filters.minTime !== null ||
     filters.favoritesOnly;
 
   const clearAllFilters = () => {
@@ -67,6 +66,7 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
       proteinType: 'All',
       mealType: 'All',
       maxTime: null,
+      minTime: null,
       favoritesOnly: false,
     });
   };
@@ -161,7 +161,7 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
 
       {/* Bottom row: Time filter + Favorites + Clear */}
       <div className="flex flex-wrap items-center gap-3 pt-1">
-        {/* Max time */}
+        {/* Time filters */}
         <div className="flex flex-wrap gap-2">
           {TIME_OPTIONS.map((opt) => (
             <button
@@ -178,6 +178,18 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
               {opt.label}
             </button>
           ))}
+          <button
+            onClick={() => updateFilter('minTime', filters.minTime === 90 ? null : 90)}
+            className={`
+              px-4 py-2 rounded-full text-base font-semibold border-2 transition-all
+              ${filters.minTime === 90
+                ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                : 'bg-white border-amber-200 text-stone-600 hover:border-amber-300 hover:bg-amber-50'
+              }
+            `}
+          >
+            🍖 Over 90 min
+          </button>
         </div>
 
         {/* Spacer */}
