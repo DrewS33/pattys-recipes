@@ -34,7 +34,7 @@ export default function App() {
   // ---- Persisted state (localStorage) ----
 
   // Recipes list — seeded with sample data on first visit
-  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes', []);
+  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes-v2', []);
 
   // Selected recipes for shopping list
   const [selectedRecipes, setSelectedRecipes] = useLocalStorage<SelectedRecipe[]>(
