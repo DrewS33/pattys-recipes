@@ -1,0 +1,18 @@
+{
+  "name": "Patty's Recipe Box",
+  "short_name": "Recipe Box",
+  "description": "Ricette di famiglia — family favorites, all in one place",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf8f0",
+  "theme_color": "#8B1A1A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

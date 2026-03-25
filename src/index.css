@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles for easy readability */
+body {
+  font-family: 'Lato', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: #fdf8f0;
+  color: #3d2b1f;
+  /* Prevent iOS rubber-band scroll on body */
+  overscroll-behavior: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Respect iPhone notch / Dynamic Island at the top */
+body {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Tap highlight color for iOS */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Make modals and scrollable areas feel native on iOS */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Print styles for shopping list */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
