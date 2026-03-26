@@ -39,7 +39,7 @@ export default function Navigation({
                 Patty's Recipe Box
               </h1>
               <p className="hidden sm:block text-stone-400 text-sm italic leading-none mt-0.5">
-                Ricette di famiglia — family favorites, all in one place
+                Family favorites, all in one place
               </p>
             </div>
           </div>
