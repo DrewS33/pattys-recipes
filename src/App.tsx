@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Recipe, SelectedRecipe, Filters, MealPlan } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { sampleRecipes } from './data/recipes';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
 import RecipeCard from './components/RecipeCard';
@@ -33,8 +34,8 @@ function itemKey(name: string, unit: string): string {
 export default function App() {
   // ---- Persisted state (localStorage) ----
 
-  // Recipes list — seeded with sample data on first visit
-  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes-v2', []);
+  // Recipes list — seeded with Patty's recipes on first visit
+  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes-v2', sampleRecipes);
 
   // Selected recipes for shopping list
   const [selectedRecipes, setSelectedRecipes] = useLocalStorage<SelectedRecipe[]>(
@@ -50,6 +51,16 @@ export default function App() {
 
   // Meal plan — date key → { breakfast, lunch, dinner } recipe IDs
   const [mealPlan, setMealPlan] = useLocalStorage<MealPlan>('mealPlan', {});
+
+  // Merge any new seed recipes into existing localStorage data (handles returning users)
+  useEffect(() => {
+    const existingIds = new Set(recipes.map((r) => r.id));
+    const toAdd = sampleRecipes.filter((r) => !existingIds.has(r.id));
+    if (toAdd.length > 0) {
+      setRecipes((prev) => [...prev, ...toAdd]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---- Local (non-persisted) UI state ----
 
