@@ -346,14 +346,14 @@ export default function App() {
                 <div className="flex items-center gap-2 no-print">
                   <button
                     onClick={handleExport}
-                    className="py-2 px-3 bg-white border border-amber-200 text-stone-600 font-semibold rounded-xl text-sm hover:bg-amber-50 transition-colors flex items-center gap-1.5"
+                    className="py-2 px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
                     title="Export all recipes as JSON"
                   >
                     📤 Export
                   </button>
                   <button
                     onClick={() => importFileRef.current?.click()}
-                    className="py-2 px-3 bg-white border border-amber-200 text-stone-600 font-semibold rounded-xl text-sm hover:bg-amber-50 transition-colors flex items-center gap-1.5"
+                    className="py-2 px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
                     title="Import recipes from JSON file"
                   >
                     📥 Import

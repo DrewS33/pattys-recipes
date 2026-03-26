@@ -41,9 +41,9 @@ const CARD_GRADIENTS: Record<string, string> = {
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  Easy: 'bg-green-100 text-green-800',
-  Medium: 'bg-yellow-100 text-yellow-800',
-  Hard: 'bg-red-100 text-red-800',
+  Easy: 'bg-green-100 text-green-700',
+  Medium: 'bg-yellow-100 text-yellow-700',
+  Hard: 'bg-red-100 text-red-700',
 };
 
 function formatTime(minutes: number): string {
@@ -67,13 +67,16 @@ export default function RecipeCard({
   return (
     <div
       className={`
-        bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden flex flex-col
-        transition-all duration-200 hover:shadow-md hover:border-amber-200
-        ${isSelected ? 'ring-2 ring-primary-400 ring-offset-1 shadow-md' : ''}
+        bg-white rounded-2xl overflow-hidden flex flex-col
+        transition-all duration-200
+        ${isSelected
+          ? 'shadow-lg ring-2 ring-primary-400 ring-offset-1'
+          : 'shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)]'
+        }
       `}
     >
       {/* Card image / placeholder */}
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative h-44 overflow-hidden">
         {recipe.image ? (
           <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
         ) : (
@@ -84,7 +87,7 @@ export default function RecipeCard({
 
         {/* Selected badge */}
         {isSelected && (
-          <div className="absolute top-2 left-2 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+          <div className="absolute top-3 left-3 bg-primary-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
             ✓ In List
           </div>
         )}
@@ -96,8 +99,8 @@ export default function RecipeCard({
             onToggleFavorite(recipe.id);
           }}
           className={`
-            absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center text-xl
-            transition-all duration-200 shadow-md
+            absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-lg
+            transition-all duration-200 shadow-sm
             ${isFavorite
               ? 'bg-yellow-400 hover:bg-yellow-300'
               : 'bg-white/80 hover:bg-white text-gray-400'
@@ -109,68 +112,73 @@ export default function RecipeCard({
         </button>
 
         {/* Time badge */}
-        <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-semibold px-2 py-1 rounded-lg">
-          ⏱ {formatTime(recipe.totalTimeMinutes)}
+        <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+          {formatTime(recipe.totalTimeMinutes)}
         </div>
       </div>
 
       {/* Card content */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-5 flex flex-col flex-1 gap-3">
         {/* Recipe name */}
-        <h3 className="font-display text-lg font-bold text-stone-800 leading-tight mb-1">{recipe.name}</h3>
-
-        {/* Star rating */}
-        {recipe.rating !== undefined && (
-          <div className="mb-1">
-            <StarRating rating={recipe.rating} size="sm" readOnly />
-          </div>
-        )}
+        <div>
+          <h3 className="font-display text-lg font-bold text-stone-800 leading-tight">{recipe.name}</h3>
+          {recipe.rating !== undefined && (
+            <div className="mt-1">
+              <StarRating rating={recipe.rating} size="sm" readOnly />
+            </div>
+          )}
+        </div>
 
         {/* Description */}
-        <p className="text-stone-500 text-sm leading-snug mb-3 line-clamp-2 flex-1">
+        <p className="text-stone-400 text-sm leading-relaxed line-clamp-2 flex-1">
           {recipe.description}
         </p>
 
         {/* Tags row */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {/* Difficulty badge */}
-          <span className={`text-xs font-bold px-2 py-1 rounded-full ${DIFFICULTY_COLORS[recipe.difficulty]}`}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[recipe.difficulty]}`}>
             {recipe.difficulty}
           </span>
-          {/* Category */}
-          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary-100 text-primary-700">
-            {recipe.proteinType}
-          </span>
-          {/* Meal type */}
-          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-            {recipe.mealType}
-          </span>
+          <span className="text-xs text-stone-400">{recipe.proteinType} · {recipe.mealType}</span>
         </div>
 
-        {/* Info row: servings */}
-        <div className="flex items-center gap-3 text-sm text-stone-500 mb-4">
-          <span>👥 {recipe.defaultServings} servings</span>
-          <span>•</span>
-          <span>🍳 {recipe.prepTimeMinutes}m prep</span>
-          <span>•</span>
-          <span>🔥 {recipe.cookTimeMinutes}m cook</span>
+        {/* Info row: servings / times */}
+        <div className="flex items-center gap-4 text-xs text-stone-400">
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20H7a2 2 0 01-2-2V9a2 2 0 012-2h1V5a3 3 0 016 0v2h1a2 2 0 012 2v9a2 2 0 01-2 2z" />
+            </svg>
+            {recipe.defaultServings} serv.
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+            {recipe.prepTimeMinutes}m prep
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343M12 3v1m0 16v1m9-9h-1M4 12H3" />
+            </svg>
+            {recipe.cookTimeMinutes}m cook
+          </span>
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 mt-auto">
+        <div className="flex gap-2 mt-1">
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-2 px-3 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm hover:bg-primary-100 transition-colors border border-primary-200"
+            className="flex-1 py-2 px-3 text-stone-500 font-medium rounded-lg text-sm hover:bg-stone-50 hover:text-stone-700 transition-colors"
           >
             View Recipe
           </button>
           <button
             onClick={() => onSelect(recipe)}
             className={`
-              flex-1 py-2 px-3 font-semibold rounded-lg text-sm transition-all border
+              flex-1 py-2 px-3 font-semibold rounded-lg text-sm transition-all
               ${isSelected
-                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                : 'bg-primary-500 text-white border-primary-500 hover:bg-primary-600 shadow-sm'
+                ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm'
               }
             `}
           >
