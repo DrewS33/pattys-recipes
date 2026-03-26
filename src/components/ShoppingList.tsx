@@ -150,15 +150,14 @@ export default function ShoppingList({
         </button>
       </div>
 
-      {/* Grocery sections */}
+      {/* Grocery sections — unchecked items only */}
       <div className="space-y-6">
         {GROCERY_SECTION_ORDER.map((section) => {
-          const items = groupedItems[section];
-          if (!items || items.length === 0) return null;
+          const items = (groupedItems[section] ?? []).filter((item) => !checkedItems.has(itemKey(item)));
+          if (items.length === 0) return null;
 
           return (
             <div key={section}>
-              {/* Section header */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">{GROCERY_SECTION_ICONS[section]}</span>
                 <h3 className="font-display text-base font-bold text-primary-800">{section}</h3>
@@ -170,56 +169,25 @@ export default function ShoppingList({
                 <span className="text-xs text-stone-400 italic">{items.length} item{items.length !== 1 ? 's' : ''}</span>
               </div>
 
-              {/* Items in this section */}
               <ul className="space-y-2">
                 {items.map((item) => {
                   const key = itemKey(item);
-                  const isChecked = checkedItems.has(key);
-
                   return (
                     <li
                       key={key}
-                      className={`
-                        flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer
-                        ${isChecked
-                          ? 'bg-gray-50 border-gray-200 opacity-60'
-                          : 'bg-white border-gray-200 hover:border-primary-200 hover:bg-primary-50'
-                        }
-                      `}
+                      className="flex items-start gap-3 p-3 rounded-xl border bg-white border-gray-200 hover:border-primary-200 hover:bg-primary-50 transition-all cursor-pointer"
                       onClick={() => onToggleCheck(key)}
                     >
-                      {/* Checkbox */}
-                      <div
-                        className={`
-                          flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-0.5 transition-all
-                          ${isChecked
-                            ? 'bg-primary-500 border-primary-500 text-white'
-                            : 'border-gray-300'
-                          }
-                        `}
-                      >
-                        {isChecked && <span className="text-xs font-bold">✓</span>}
-                      </div>
-
-                      {/* Item info */}
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mt-0.5 transition-all" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2">
-                          <span
-                            className={`text-base font-bold ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'}`}
-                          >
+                          <span className="text-base font-bold text-gray-800">
                             {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
                           </span>
-                          <span
-                            className={`text-base ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}`}
-                          >
-                            {item.name}
-                          </span>
+                          <span className="text-base text-gray-700">{item.name}</span>
                         </div>
-                        {/* Source recipes */}
                         {item.sources.length > 0 && (
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {item.sources.join(', ')}
-                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
                         )}
                       </div>
                     </li>
@@ -230,6 +198,45 @@ export default function ShoppingList({
           );
         })}
       </div>
+
+      {/* Done section — checked items */}
+      {checkedCount > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">✅</span>
+            <h3 className="font-display text-base font-bold text-stone-400">Done</h3>
+            <div className="flex-1 border-b border-stone-200" />
+            <span className="text-xs text-stone-400 italic">{checkedCount} item{checkedCount !== 1 ? 's' : ''}</span>
+          </div>
+          <ul className="space-y-2">
+            {allItems.filter((item) => checkedItems.has(itemKey(item))).map((item) => {
+              const key = itemKey(item);
+              return (
+                <li
+                  key={key}
+                  className="flex items-start gap-3 p-3 rounded-xl border bg-stone-50 border-stone-100 opacity-50 cursor-pointer hover:opacity-70 transition-all"
+                  onClick={() => onToggleCheck(key)}
+                >
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-400 border-2 border-primary-400 flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-bold text-white">✓</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-bold line-through text-stone-400">
+                        {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
+                      </span>
+                      <span className="text-base line-through text-stone-400">{item.name}</span>
+                    </div>
+                    {item.sources.length > 0 && (
+                      <p className="text-xs text-stone-300 mt-0.5">{item.sources.join(', ')}</p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {/* All done message */}
       {totalItems > 0 && checkedCount === totalItems && (
