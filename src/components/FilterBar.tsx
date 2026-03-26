@@ -71,15 +71,15 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
     });
   };
 
-  const chipBase = 'px-3 py-1.5 rounded-full text-sm transition-all duration-150 whitespace-nowrap';
+  const chipBase = 'px-3 py-1.5 rounded-full text-sm transition-all duration-150 whitespace-nowrap active:scale-95';
   const chipActive = 'bg-primary-500 text-white font-semibold shadow-sm';
-  const chipInactive = 'bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700';
+  const chipInactive = 'bg-stone-100/80 text-stone-500 hover:bg-stone-200/80 hover:text-stone-700';
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] p-5 mb-6 space-y-5 no-print">
+    <div className="bg-white/70 rounded-2xl shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-5 mb-6 space-y-6 no-print">
       {/* Search bar */}
       <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400">
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
           </svg>
@@ -89,12 +89,12 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
           placeholder="Search recipes by name or ingredient..."
           value={filters.search}
           onChange={(e) => updateFilter('search', e.target.value)}
-          className="w-full pl-10 pr-10 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100 transition-all text-stone-700 placeholder-stone-400"
+          className="w-full pl-10 pr-10 py-2.5 text-sm border border-stone-200/80 rounded-xl bg-white focus:outline-none focus:border-primary-300 focus:ring-2 focus:ring-primary-100 transition-all duration-150 text-stone-700 placeholder-stone-300"
         />
         {filters.search && (
           <button
             onClick={() => updateFilter('search', '')}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-500 transition-colors duration-150"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -105,8 +105,8 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
 
       {/* Difficulty filter */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Difficulty</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Difficulty</p>
+        <div className="flex flex-wrap gap-1.5">
           {DIFFICULTY_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -121,8 +121,8 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
 
       {/* Category / Protein filter */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Category</p>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Category</p>
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           {PROTEIN_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -137,8 +137,8 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
 
       {/* Meal Type filter */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Meal Type</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Meal Type</p>
+        <div className="flex flex-wrap gap-1.5">
           {MEAL_TYPE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -152,7 +152,7 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
       </div>
 
       {/* Bottom row: Time + Favorites + Clear */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-100">
+      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-stone-100">
         {TIME_OPTIONS.map((opt) => (
           <button
             key={String(opt.value)}
@@ -181,7 +181,7 @@ export default function FilterBar({ filters, onFilterChange }: FilterBarProps) {
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="px-3 py-1.5 rounded-full text-sm text-red-400 hover:bg-red-50 hover:text-red-500 transition-all"
+            className="px-3 py-1.5 rounded-full text-sm text-stone-400 hover:text-red-400 hover:bg-red-50 transition-all duration-150 active:scale-95"
           >
             ✕ Clear
           </button>

@@ -14,7 +14,6 @@ interface RecipeCardProps {
   onToggleFavorite: (id: string) => void;
 }
 
-// Map protein types to food emoji for the card image placeholder
 const PROTEIN_EMOJI: Record<string, string> = {
   Chicken: '🍗',
   Beef: '🥩',
@@ -27,7 +26,6 @@ const PROTEIN_EMOJI: Record<string, string> = {
   Other: '🍴',
 };
 
-// Gradient backgrounds for card images, by protein type
 const CARD_GRADIENTS: Record<string, string> = {
   Chicken: 'from-amber-200 to-amber-400',
   Beef: 'from-red-700 to-red-900',
@@ -67,20 +65,24 @@ export default function RecipeCard({
   return (
     <div
       className={`
-        bg-white rounded-2xl overflow-hidden flex flex-col
-        transition-all duration-200
+        group bg-white rounded-2xl overflow-hidden flex flex-col
+        transition-all duration-200 ease-out
         ${isSelected
-          ? 'shadow-lg ring-2 ring-primary-400 ring-offset-1'
-          : 'shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)]'
+          ? 'shadow-[0_4px_20px_rgba(0,0,0,0.13)] ring-2 ring-primary-400 ring-offset-1 -translate-y-0.5'
+          : 'shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1'
         }
       `}
     >
-      {/* Card image / placeholder */}
+      {/* Card image */}
       <div className="relative h-44 overflow-hidden">
         {recipe.image ? (
-          <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
+          <img
+            src={recipe.image}
+            alt={recipe.name}
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-105`}>
             <span className="text-7xl">{emoji}</span>
           </div>
         )}
@@ -100,10 +102,10 @@ export default function RecipeCard({
           }}
           className={`
             absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-lg
-            transition-all duration-200 shadow-sm
+            transition-all duration-150 shadow-sm active:scale-95
             ${isFavorite
               ? 'bg-yellow-400 hover:bg-yellow-300'
-              : 'bg-white/80 hover:bg-white text-gray-400'
+              : 'bg-white/80 hover:bg-white text-gray-400 hover:text-gray-600'
             }
           `}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -118,19 +120,19 @@ export default function RecipeCard({
       </div>
 
       {/* Card content */}
-      <div className="p-5 flex flex-col flex-1 gap-3">
-        {/* Recipe name */}
+      <div className="p-5 flex flex-col flex-1 gap-3.5">
+        {/* Recipe name + rating */}
         <div>
           <h3 className="font-display text-lg font-bold text-stone-800 leading-tight">{recipe.name}</h3>
           {recipe.rating !== undefined && (
-            <div className="mt-1">
+            <div className="mt-1.5">
               <StarRating rating={recipe.rating} size="sm" readOnly />
             </div>
           )}
         </div>
 
         {/* Description */}
-        <p className="text-stone-400 text-sm leading-relaxed line-clamp-2 flex-1">
+        <p className="text-stone-400 text-sm leading-[1.65] line-clamp-2 flex-1">
           {recipe.description}
         </p>
 
@@ -139,25 +141,25 @@ export default function RecipeCard({
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[recipe.difficulty]}`}>
             {recipe.difficulty}
           </span>
-          <span className="text-xs text-stone-400">{recipe.proteinType} · {recipe.mealType}</span>
+          <span className="text-xs text-stone-300 tracking-wide">{recipe.proteinType} · {recipe.mealType}</span>
         </div>
 
-        {/* Info row: servings / times */}
+        {/* Info row */}
         <div className="flex items-center gap-4 text-xs text-stone-400">
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <span className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20H7a2 2 0 01-2-2V9a2 2 0 012-2h1V5a3 3 0 016 0v2h1a2 2 0 012 2v9a2 2 0 01-2 2z" />
             </svg>
-            {recipe.defaultServings} serv.
+            {recipe.defaultServings}
           </span>
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <span className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
             </svg>
             {recipe.prepTimeMinutes}m prep
           </span>
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <span className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343M12 3v1m0 16v1m9-9h-1M4 12H3" />
             </svg>
             {recipe.cookTimeMinutes}m cook
@@ -165,20 +167,20 @@ export default function RecipeCard({
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 mt-1">
+        <div className="flex gap-1 mt-0.5">
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-2 px-3 text-stone-500 font-medium rounded-lg text-sm hover:bg-stone-50 hover:text-stone-700 transition-colors"
+            className="flex-1 py-2 px-3 text-stone-400 font-medium rounded-lg text-sm hover:text-stone-600 hover:bg-stone-50 transition-all duration-150 active:scale-[0.97]"
           >
             View Recipe
           </button>
           <button
             onClick={() => onSelect(recipe)}
             className={`
-              flex-1 py-2 px-3 font-semibold rounded-lg text-sm transition-all
+              flex-1 py-2 px-3 font-semibold rounded-lg text-sm transition-all duration-150 active:scale-[0.97]
               ${isSelected
-                ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm'
+                ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500'
+                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow-md'
               }
             `}
           >
