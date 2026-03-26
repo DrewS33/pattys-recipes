@@ -31,7 +31,7 @@ export default function Navigation({
         <div className="h-1.5 bg-primary-700" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
         {/* App title bar */}
-        <div className="max-w-7xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 pt-2.5 pb-1.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <span className="text-3xl sm:text-4xl opacity-90">🍽️</span>
             <div>
@@ -53,7 +53,7 @@ export default function Navigation({
         </div>
 
         {/* ── Desktop tab navigation (sm+) ── */}
-        <nav className="hidden sm:block max-w-7xl mx-auto px-4 pb-3 pt-1">
+        <nav className="hidden sm:block max-w-7xl mx-auto px-4 pb-2.5 pt-0.5">
           <div className="flex gap-0.5">
             {tabs.map((tab) => {
               const badge = tab.id === 'shopping' ? shoppingListCount : undefined;

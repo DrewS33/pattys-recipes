@@ -68,8 +68,8 @@ export default function RecipeCard({
         group bg-white rounded-2xl overflow-hidden flex flex-col
         transition-all duration-200 ease-out
         ${isSelected
-          ? 'shadow-[0_4px_20px_rgba(0,0,0,0.13)] ring-2 ring-primary-400 ring-offset-1 -translate-y-0.5'
-          : 'shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1'
+          ? 'shadow-[0_6px_24px_rgba(0,0,0,0.14)] ring-2 ring-primary-400 ring-offset-1 -translate-y-0.5'
+          : 'shadow-[0_2px_16px_rgba(0,0,0,0.09)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.14)] hover:-translate-y-1'
         }
       `}
     >
@@ -79,10 +79,10 @@ export default function RecipeCard({
           <img
             src={recipe.image}
             alt={recipe.name}
-            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-105`}>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-103`}>
             <span className="text-7xl">{emoji}</span>
           </div>
         )}
@@ -120,7 +120,7 @@ export default function RecipeCard({
       </div>
 
       {/* Card content */}
-      <div className="p-5 flex flex-col flex-1 gap-3.5">
+      <div className="p-5 flex flex-col flex-1 gap-3.5 pt-4">
         {/* Recipe name + rating */}
         <div>
           <h3 className="font-display text-lg font-bold text-stone-800 leading-tight">{recipe.name}</h3>
@@ -170,7 +170,7 @@ export default function RecipeCard({
         <div className="flex gap-1 mt-0.5">
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-2 px-3 text-stone-400 font-medium rounded-lg text-sm hover:text-stone-600 hover:bg-stone-50 transition-all duration-150 active:scale-[0.97]"
+            className="flex-1 py-2 px-3 text-stone-400 text-sm hover:text-stone-600 hover:underline transition-all duration-150 active:scale-[0.97]"
           >
             View Recipe
           </button>

@@ -21,9 +21,9 @@ export default function SelectedRecipesPanel({
   const count = selectedRecipes.length;
 
   return (
-    <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden no-print">
+    <div className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.09)] overflow-hidden no-print">
       {/* Panel header */}
-      <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+      <div className="px-4 py-3.5 border-b border-stone-100">
         <h2 className="font-display text-lg font-bold text-stone-800 flex items-center gap-2">
           🗒️ Selected Recipes
           {count > 0 && (
@@ -88,10 +88,10 @@ export default function SelectedRecipesPanel({
 
       {/* Footer: View Shopping List button */}
       {count > 0 && (
-        <div className="p-4 bg-amber-50 border-t border-amber-100">
+        <div className="p-4 border-t border-stone-100">
           <button
             onClick={onViewShoppingList}
-            className="w-full py-3 px-4 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 bg-primary-500 text-white font-semibold rounded-xl text-sm hover:bg-primary-600 transition-all duration-150 shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
           >
             🛒 View Shopping List
             <span className="text-primary-200">→</span>
