@@ -54,7 +54,7 @@ export default function Navigation({
 
         {/* ── Desktop tab navigation (sm+) ── */}
         <nav className="hidden sm:block max-w-7xl mx-auto px-4 pb-2.5 pt-0.5">
-          <div className="flex gap-0.5">
+          <div className="flex gap-1">
             {tabs.map((tab) => {
               const badge = tab.id === 'shopping' ? shoppingListCount : undefined;
               const isActive = activeTab === tab.id;
@@ -63,10 +63,10 @@ export default function Navigation({
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={`
-                    relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                    relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium
                     transition-all duration-150
                     ${isActive
-                      ? 'bg-primary-600 text-white shadow-sm'
+                      ? 'bg-primary-600/90 text-white shadow-sm'
                       : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
                     }
                   `}

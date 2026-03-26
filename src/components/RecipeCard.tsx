@@ -82,7 +82,7 @@ export default function RecipeCard({
             className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-103`}>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-[1.03]`}>
             <span className="text-7xl">{emoji}</span>
           </div>
         )}
@@ -120,7 +120,7 @@ export default function RecipeCard({
       </div>
 
       {/* Card content */}
-      <div className="p-5 flex flex-col flex-1 gap-3.5 pt-4">
+      <div className="px-5 pt-4 pb-5 flex flex-col flex-1 gap-3.5">
         {/* Recipe name + rating */}
         <div>
           <h3 className="font-display text-lg font-bold text-stone-800 leading-tight">{recipe.name}</h3>
@@ -167,7 +167,7 @@ export default function RecipeCard({
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-1 mt-0.5">
+        <div className="flex gap-2 mt-0.5">
           <button
             onClick={() => onViewDetail(recipe)}
             className="flex-1 py-2 px-3 text-stone-400 text-sm hover:text-stone-600 hover:underline transition-all duration-150 active:scale-[0.97]"
