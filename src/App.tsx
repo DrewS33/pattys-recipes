@@ -283,7 +283,7 @@ export default function App() {
   const renderRecipeGrid = (recipeList: Recipe[], emptyMessage: string) => {
     if (recipeList.length === 0) {
       return (
-        <div className="text-center py-20 px-4">
+        <div className="text-center py-24 px-4">
           <div className="text-7xl mb-4">🍽️</div>
           <h3 className="font-display text-xl font-bold text-stone-600 mb-2">Nothing found</h3>
           <p className="text-stone-400 text-base leading-relaxed">{emptyMessage}</p>
@@ -292,7 +292,7 @@ export default function App() {
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {recipeList.map((recipe) => (
           <RecipeCard
             key={recipe.id}
@@ -328,7 +328,7 @@ export default function App() {
 
       {/* Page content */}
       {/* pb-24 on mobile = room for fixed bottom tab bar */}
-      <main className="max-w-7xl mx-auto px-4 py-6 pb-28 sm:pb-6">
+      <main className="max-w-7xl mx-auto px-4 py-8 pb-28 sm:pb-8">
 
         {/* ---- RECIPES TAB ---- */}
         {activeTab === 'recipes' && (
@@ -336,10 +336,10 @@ export default function App() {
             {/* Left: filter + recipe grid */}
             <div className="flex-1 min-w-0">
               {/* Header row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <div>
                   <h2 className="font-display text-2xl font-bold text-stone-800">Browse Recipes</h2>
-                  <p className="text-stone-500 text-sm">
+                  <p className="text-stone-400 text-sm mt-0.5">
                     {filteredRecipes.length} of {recipes.length} recipes
                   </p>
                 </div>
@@ -444,7 +444,7 @@ export default function App() {
             </div>
 
             {favoriteRecipes.length === 0 ? (
-              <div className="text-center py-20 px-4">
+              <div className="text-center py-24 px-4">
                 <div className="text-7xl mb-4">⭐</div>
                 <h3 className="font-display text-xl font-bold text-stone-600 mb-2">No favorites yet</h3>
                 <p className="text-stone-400 text-base leading-relaxed">
@@ -452,7 +452,7 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {favoriteRecipes.map((recipe) => (
                   <RecipeCard
                     key={recipe.id}

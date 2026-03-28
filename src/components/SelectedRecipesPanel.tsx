@@ -33,7 +33,7 @@ export default function SelectedRecipesPanel({
   const count = selectedRecipes.length;
 
   return (
-    <div className="bg-[#fffdf9] border border-stone-200/70 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] overflow-hidden no-print">
+    <div className="bg-[#fffdf9] border border-stone-200/60 rounded-2xl shadow-card overflow-hidden no-print">
       {/* Panel header */}
       <div className="px-5 py-4 border-b border-stone-100 bg-primary-50/60">
         <div className="flex items-center justify-between">
@@ -56,14 +56,13 @@ export default function SelectedRecipesPanel({
       {/* Recipe list */}
       <div className="divide-y divide-stone-100">
         {count === 0 ? (
-          <div className="px-5 py-8 text-center">
-            <div className="text-5xl mb-3">🛒</div>
-            <p className="text-stone-600 text-sm font-medium leading-snug">
-              Nothing here yet!
+          <div className="px-5 py-9 text-center">
+            <div className="text-5xl mb-4">🧺</div>
+            <p className="text-stone-700 text-sm font-semibold leading-snug mb-1.5">
+              Your list is empty
             </p>
-            <p className="text-stone-400 text-xs mt-1.5 leading-relaxed">
-              Browse recipes below and tap<br />
-              <span className="font-medium text-stone-500">"Add to Shopping List"</span> to get started.
+            <p className="text-stone-400 text-xs leading-relaxed">
+              Start building your shopping list<br />by adding a recipe from below.
             </p>
           </div>
         ) : (

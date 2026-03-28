@@ -2,38 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles for easy readability */
+/* ── Base styles ── */
 body {
   font-family: 'Lato', system-ui, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.65;
   background-color: #fdf8f0;
   color: #3d2b1f;
-  /* Prevent iOS rubber-band scroll on body */
   overscroll-behavior: none;
+  /* Crisp text rendering — makes fonts feel softer and more print-like */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Respect iPhone notch / Dynamic Island at the top */
+/* iPhone notch / Dynamic Island */
 body {
   padding-top: env(safe-area-inset-top);
 }
 
-/* Tap highlight color for iOS */
+/* Remove iOS tap flash */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Make modals and scrollable areas feel native on iOS */
+/* Native momentum scrolling on iOS */
 .overflow-y-auto {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Print styles for shopping list */
+/* Hide scrollbar on filter chip rows but keep scroll functional */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Subtle section divider used in filter / panel layouts */
+.section-divider {
+  border-top: 1px solid rgba(120, 100, 80, 0.08);
+}
+
+/* Print styles */
 @media print {
   .no-print {
     display: none !important;

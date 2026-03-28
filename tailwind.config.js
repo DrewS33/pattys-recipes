@@ -7,17 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Warm terracotta / brick red — cookbook warmth, not alarm-panel red
         primary: {
-          50:  '#fef5f4',
-          100: '#fde8e6',
-          200: '#fbd0cc',
-          300: '#f5a5a0',
-          400: '#e87068',
-          500: '#c0392b',
-          600: '#a93226',
-          700: '#8b1a1a',
-          800: '#6b1414',
-          900: '#4a0e0e',
+          50:  '#fef5f2',
+          100: '#fde6df',
+          200: '#fac9bc',
+          300: '#f4a08e',
+          400: '#e57560',
+          500: '#c25842',   // main button colour — warm brick terracotta
+          600: '#a84535',   // hover / darker
+          700: '#8b3228',   // deep brick (header stripe, nav active)
+          800: '#6b2218',   // very dark — title text
+          900: '#4a150e',
         },
         olive: {
           50:  '#f6f7ee',
@@ -35,6 +36,11 @@ export default {
       fontFamily: {
         sans: ['Lato', 'system-ui', 'sans-serif'],
         display: ['"Playfair Display"', 'Georgia', 'serif'],
+      },
+      boxShadow: {
+        // Warm-tinted card shadow — feels organic, not grey/corporate
+        'card':    '0 2px 12px rgba(139, 50, 40, 0.07), 0 1px 3px rgba(0,0,0,0.05)',
+        'card-lg': '0 8px 28px rgba(139, 50, 40, 0.12), 0 2px 8px rgba(0,0,0,0.06)',
       },
     },
   },
