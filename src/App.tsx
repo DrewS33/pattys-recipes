@@ -285,8 +285,8 @@ export default function App() {
       return (
         <div className="text-center py-20 px-4">
           <div className="text-7xl mb-4">🍽️</div>
-          <h3 className="font-display text-xl font-bold text-stone-600 mb-2">No recipes found</h3>
-          <p className="text-stone-400 text-base">{emptyMessage}</p>
+          <h3 className="font-display text-xl font-bold text-stone-600 mb-2">Nothing found</h3>
+          <p className="text-stone-400 text-base leading-relaxed">{emptyMessage}</p>
         </div>
       );
     }
@@ -338,7 +338,7 @@ export default function App() {
               {/* Header row */}
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-stone-800">All Recipes</h2>
+                  <h2 className="font-display text-2xl font-bold text-stone-800">Browse Recipes</h2>
                   <p className="text-stone-500 text-sm">
                     {filteredRecipes.length} of {recipes.length} recipes
                   </p>
@@ -381,8 +381,8 @@ export default function App() {
               {renderRecipeGrid(
                 filteredRecipes,
                 filters.search || filters.difficulty !== 'All' || filters.proteinType !== 'All' || filters.mealType !== 'All' || filters.maxTime !== null || filters.minTime !== null || filters.favoritesOnly
-                  ? 'Try adjusting your filters to find what you\'re looking for.'
-                  : 'No recipes yet. Click "Add Recipe" to get started!'
+                  ? 'Try adjusting your filters — something delicious is waiting!'
+                  : 'Your recipe box is empty. Tap "Add Recipe" to start building your family cookbook!'
               )}
             </div>
 
@@ -403,7 +403,7 @@ export default function App() {
                       onClick={() => setActiveTab('shopping')}
                       className="text-primary-600 text-sm font-semibold hover:underline"
                     >
-                      View full shopping list →
+                      Open your full shopping list →
                     </button>
                   </div>
                 )}
@@ -437,7 +437,7 @@ export default function App() {
         {activeTab === 'favorites' && (
           <div>
             <div className="mb-6">
-              <h2 className="font-display text-2xl font-bold text-stone-800 mb-1">⭐ Favorites</h2>
+              <h2 className="font-display text-2xl font-bold text-stone-800 mb-1">⭐ Your Favorites</h2>
               <p className="text-stone-500 text-sm">
                 {favoriteRecipes.length} favorite recipe{favoriteRecipes.length !== 1 ? 's' : ''}
               </p>
@@ -447,8 +447,8 @@ export default function App() {
               <div className="text-center py-20 px-4">
                 <div className="text-7xl mb-4">⭐</div>
                 <h3 className="font-display text-xl font-bold text-stone-600 mb-2">No favorites yet</h3>
-                <p className="text-stone-400 text-base">
-                  Click the ⭐ star on any recipe card to save it here!
+                <p className="text-stone-400 text-base leading-relaxed">
+                  Tap the ⭐ star on any recipe card to save your family's go-to meals here.
                 </p>
               </div>
             ) : (

@@ -74,7 +74,7 @@ export default function RecipeCard({
       `}
     >
       {/* Card image */}
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-52 overflow-hidden">
         {recipe.image ? (
           <img
             src={recipe.image}
@@ -90,7 +90,14 @@ export default function RecipeCard({
         {/* Selected badge */}
         {isSelected && (
           <div className="absolute top-3 left-3 bg-primary-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
-            ✓ In List
+            ✓ In Your List
+          </div>
+        )}
+
+        {/* Quick meal badge */}
+        {!isSelected && recipe.totalTimeMinutes <= 30 && (
+          <div className="absolute top-3 left-3 bg-emerald-500/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm backdrop-blur-sm">
+            ⚡ Quick Meal
           </div>
         )}
 
@@ -101,7 +108,7 @@ export default function RecipeCard({
             onToggleFavorite(recipe.id);
           }}
           className={`
-            absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-lg
+            absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-lg
             transition-all duration-150 shadow-sm active:scale-95
             ${isFavorite
               ? 'bg-yellow-400 hover:bg-yellow-300'
@@ -114,7 +121,7 @@ export default function RecipeCard({
         </button>
 
         {/* Time badge */}
-        <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+        <div className="absolute bottom-3 right-3 bg-black/55 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
           {formatTime(recipe.totalTimeMinutes)}
         </div>
       </div>
@@ -138,10 +145,15 @@ export default function RecipeCard({
 
         {/* Tags row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[recipe.difficulty]}`}>
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${DIFFICULTY_COLORS[recipe.difficulty]}`}>
             {recipe.difficulty}
           </span>
-          <span className="text-xs text-stone-300 tracking-wide">{recipe.proteinType} · {recipe.mealType}</span>
+          {isFavorite && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-600">
+              ❤️ Family Favorite
+            </span>
+          )}
+          <span className="text-xs text-stone-400 tracking-wide">{recipe.proteinType} · {recipe.mealType}</span>
         </div>
 
         {/* Info row */}
@@ -170,21 +182,21 @@ export default function RecipeCard({
         <div className="flex gap-2 mt-0.5">
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-2 px-3 text-stone-400 text-sm hover:text-stone-600 hover:underline transition-all duration-150 active:scale-[0.97]"
+            className="flex-1 py-2.5 px-3 text-stone-500 text-sm hover:text-stone-700 hover:underline transition-all duration-150 active:scale-[0.97]"
           >
             View Recipe
           </button>
           <button
             onClick={() => onSelect(recipe)}
             className={`
-              flex-1 py-2 px-3 font-semibold rounded-lg text-sm transition-all duration-150 active:scale-[0.97]
+              flex-1 py-2.5 px-3 font-semibold rounded-xl text-sm transition-all duration-150 active:scale-[0.97]
               ${isSelected
                 ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500'
                 : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow-md'
               }
             `}
           >
-            {isSelected ? '✕ Remove' : '+ Add to List'}
+            {isSelected ? '✕ Remove from List' : '+ Add to Shopping List'}
           </button>
         </div>
       </div>

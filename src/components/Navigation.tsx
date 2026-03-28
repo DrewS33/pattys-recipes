@@ -31,23 +31,23 @@ export default function Navigation({
         <div className="h-1.5 bg-primary-700" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
         {/* App title bar */}
-        <div className="max-w-7xl mx-auto px-4 pt-2.5 pb-1.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <span className="text-3xl sm:text-4xl opacity-90">🍽️</span>
+        <div className="max-w-7xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <span className="text-3xl sm:text-4xl">🍽️</span>
             <div>
               <h1 className="font-display text-xl sm:text-3xl font-bold text-primary-800 leading-tight tracking-tight">
                 Patty's Recipe Box
               </h1>
-              <p className="hidden sm:block text-stone-400 text-sm italic leading-none mt-0.5">
-                Family favorites, all in one place
+              <p className="hidden sm:block text-stone-500 text-sm italic leading-none mt-1">
+                Family favorites, made simple ✨
               </p>
             </div>
           </div>
 
           {/* Selected recipes indicator — desktop only */}
           {selectedRecipesCount > 0 && (
-            <div className="hidden sm:flex items-center gap-2 bg-primary-50 text-primary-700 rounded-full px-4 py-1.5 text-sm font-medium">
-              {selectedRecipesCount} recipe{selectedRecipesCount !== 1 ? 's' : ''} selected
+            <div className="hidden sm:flex items-center gap-2 bg-primary-50 border border-primary-100 text-primary-700 rounded-full px-4 py-1.5 text-sm font-medium">
+              🍴 {selectedRecipesCount} recipe{selectedRecipesCount !== 1 ? 's' : ''} in your list
             </div>
           )}
         </div>
