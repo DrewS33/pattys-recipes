@@ -48,6 +48,15 @@ body {
   border-top: 1px solid rgba(120, 100, 80, 0.08);
 }
 
+/* Floating filter panel — gentle drop-in */
+@keyframes filterPanelIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.filter-panel-enter {
+  animation: filterPanelIn 0.15s ease-out both;
+}
+
 /* Print styles */
 @media print {
   .no-print {
