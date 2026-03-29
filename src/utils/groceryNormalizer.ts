@@ -85,36 +85,30 @@ const TRAILING_PREP_PHRASES = [
 const EMBEDDED_QTY_UNIT_RE =
   /^[\d\/\-\. ]+\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|c\.?|T\.?)\s+/i;
 
+// ── Regexes used in final sanitization ──────────────────────
+const RE_FRACTION  = /\d+\/\d+/g;      // 1/2, 3/4, 2/3
+const RE_DECIMAL   = /\d*\.\d+/g;      // .5, 1.5, 0.25
+const RE_INTEGER   = /\b\d+\b/g;       // standalone whole numbers
+const RE_AMP       = /&/g;             // stray & symbols
+const RE_MULTI_SPC = /\s{2,}/g;        // consecutive spaces
+const RE_LEAD_JUNK = /^[^a-zA-Z]+/;    // non-letter characters at the start
+const RE_TRAIL_JUNK = /[^a-zA-Z\s]+$/; // non-letter/space characters at the end
+
 
 // ============================================================
-// stripPrepNotes
-//   Removes cooking-only language from an ingredient name.
-//   Handles every style found in the real recipe data:
-//     "onion, diced"              → comma-separated prep note
-//     "garlic (minced)"           → parenthetical prep note
-//     "Diced Onion"               → leading prep word
-//     "quartered fresh mushrooms" → multiple leading prep words
-//     "chicken breast sliced thin"→ trailing prep phrase
-//     "Water, divided"            → trailing "divided"
+// stripSingleName
+//   Cleans ONE ingredient name (no commas inside).
+//   Strips prep notes, leading/trailing prep words.
+//   Used on individual parts after comma-splitting.
 // ============================================================
-function stripPrepNotes(name: string): string {
+function stripSingleName(name: string): string {
   let s = name.trim();
 
-  // 1. Strip embedded "1-1/2 cups" prefix when full recipe line is in the name
-  s = s.replace(EMBEDDED_QTY_UNIT_RE, '').trim();
-
-  // 2. Strip parenthetical notes: "(minced)", "(, finely chopped)"
+  // Remove parenthetical notes: "(minced)", "(, finely chopped)"
   s = s.replace(/\s*\([^)]*\)/g, '').trim();
 
-  // 3. Strip "divided" before the comma check (prevents orphan commas)
-  s = s.replace(/,?\s*divided\s*$/i, '').trim();
-
-  // 4. Strip everything after the first comma
-  const ci = s.indexOf(',');
-  if (ci > 0) s = s.substring(0, ci).trim();
-
-  // 5. Repeatedly strip leading prep words (loops until stable)
-  //    "Quartered Fresh Mushrooms" → "Fresh Mushrooms" → "Mushrooms"
+  // Repeatedly strip leading prep words until stable
+  // e.g. "quartered fresh mushrooms" → "fresh mushrooms" → "mushrooms"
   let changed = true;
   while (changed) {
     changed = false;
@@ -125,7 +119,7 @@ function stripPrepNotes(name: string): string {
     }
   }
 
-  // 6. Strip trailing prep phrases (longest first)
+  // Strip trailing prep phrases (longest first)
   const lc = s.toLowerCase();
   for (const phrase of TRAILING_PREP_PHRASES) {
     if (lc.endsWith(' ' + phrase)) {
@@ -134,10 +128,101 @@ function stripPrepNotes(name: string): string {
     }
   }
 
-  // 7. Collapse any double spaces left over
-  s = s.replace(/\s{2,}/g, ' ').trim();
+  return s.replace(/\s{2,}/g, ' ').trim();
+}
 
-  return s;
+// ============================================================
+// stripPrepNotes
+//   Used on the PURCHASE-UNIT path only (lbs, cans, bags…).
+//   Strips at the first comma so "chicken, diced" → "chicken".
+//   NOT used on name-only paths — those need all commas intact
+//   so "garlic, pepper, salt" can split into three items.
+// ============================================================
+function stripPrepNotes(name: string): string {
+  let s = name.trim();
+
+  // Strip embedded "1-1/2 cups" prefix
+  s = s.replace(EMBEDDED_QTY_UNIT_RE, '').trim();
+
+  // Strip parenthetical notes
+  s = s.replace(/\s*\([^)]*\)/g, '').trim();
+
+  // Strip "divided"
+  s = s.replace(/,?\s*divided\s*$/i, '').trim();
+
+  // Strip everything after the first comma (prep note: "chicken, diced")
+  const ci = s.indexOf(',');
+  if (ci > 0) s = s.substring(0, ci).trim();
+
+  return stripSingleName(s);
+}
+
+
+// ============================================================
+// sanitizeFinalIngredientString
+//   Last-pass cleanup applied to any "name-only" result before
+//   it hits the export.  Handles malformed entries where someone
+//   packed multiple ingredients or stray numbers into one line.
+//
+//   Input:  ".5 & .5 garlic, pepper, salt"
+//   Output: ["garlic", "pepper", "salt"]
+//
+//   Normal input: "olive oil"  →  ["olive oil"]  (unchanged)
+//
+//   IMPORTANT: Do NOT call this on purchase-unit strings like
+//   "1.5 lbs sirloin tips" — the numbers there are intentional.
+// ============================================================
+export function sanitizeFinalIngredientString(str: string): string[] {
+  // 1. Strip embedded quantity+unit prefix before splitting
+  //    e.g. "1-1/2 cups quartered mushrooms" → "quartered mushrooms"
+  let pre = str.replace(EMBEDDED_QTY_UNIT_RE, '').trim();
+
+  // 2. Strip ALL parenthetical content BEFORE comma-splitting.
+  //    Critical: "fresh rosemary (, finely chopped)" has a comma INSIDE the
+  //    parentheses. If we split first, we get two broken fragments.
+  //    Removing the parenthetical first → "fresh rosemary"  (one clean part).
+  pre = pre.replace(/\s*\([^)]*\)/g, '').trim();
+
+  // 3. Strip "divided" at the end (before we split on commas)
+  pre = pre.replace(/,?\s*divided\s*$/i, '').trim();
+
+  // 4. Split on commas — this is the key step that expands multi-ingredient entries
+  //    e.g. ".5 & .5 garlic, pepper, salt" → [".5 & .5 garlic", "pepper", "salt"]
+  const parts = pre
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  const results: string[] = [];
+
+  for (const part of parts) {
+    // 4. Strip prep notes from this individual part
+    let s = stripSingleName(part);
+
+    // 5. Remove stray numbers (fractions, decimals, integers) — order matters
+    s = s.replace(RE_FRACTION, '');
+    s = s.replace(RE_DECIMAL, '');
+    s = s.replace(RE_INTEGER, '');
+
+    // 6. Remove & and other stray symbols
+    s = s.replace(RE_AMP, '');
+
+    // 7. Strip leading/trailing non-letter characters left over
+    s = s.replace(RE_LEAD_JUNK, '');
+    s = s.replace(RE_TRAIL_JUNK, '');
+
+    // 8. Collapse whitespace
+    s = s.replace(RE_MULTI_SPC, ' ').trim();
+
+    // 9. Skip if the remaining string is entirely a prep/descriptor word
+    //    e.g. "onion, chopped" splits to ["onion", "chopped"] → drop "chopped"
+    if (s.length > 0 && !LEADING_PREP_WORDS.has(s.toLowerCase())) {
+      results.push(s);
+    }
+  }
+
+  // If everything sanitized away, return nothing — caller uses flatMap
+  return results;
 }
 
 
@@ -154,63 +239,67 @@ function stripPrepNotes(name: string): string {
 //       → simplify known items (garlic cloves → garlic)
 //       → return clean string
 // ============================================================
-export function cleanIngredientForGroceryExport(item: ShoppingListItem): string {
+// Returns string[] because one malformed entry (e.g. "garlic, pepper, salt")
+// can legitimately expand into multiple clean grocery items.
+// Normal entries return an array of exactly one string.
+// Returns string[] because one malformed entry (e.g. "garlic, pepper, salt")
+// can legitimately expand into multiple clean grocery items.
+// Normal entries return an array of exactly one string.
+export function cleanIngredientForGroceryExport(item: ShoppingListItem): string[] {
   const unitLc = item.unit.trim().toLowerCase();
 
-  // ── Step 1: Clean the name ───────────────────────────────
-  let cleanName = stripPrepNotes(item.name);
+  // ── PURCHASE UNIT PATH ───────────────────────────────────
+  // Strip at first comma (e.g. "chicken, diced" → "chicken"), keep quantity.
+  if (PURCHASE_UNITS.has(unitLc) && item.quantity > 0) {
+    const cleanName = stripPrepNotes(item.name); // comma-strips here is intentional
+    const cleanLc   = cleanName.toLowerCase();
 
-  // Garlic cloves always simplify to just "garlic" —
-  // a shopper buys a bulb, not individual cloves
-  if (
-    cleanName.toLowerCase() === 'garlic' ||
-    cleanName.toLowerCase() === 'garlic clove' ||
-    cleanName.toLowerCase() === 'garlic cloves' ||
-    cleanName.toLowerCase().startsWith('garlic clove') ||
-    (unitLc.includes('clove') && cleanName.toLowerCase() === 'garlic')
-  ) {
-    return 'garlic';
+    if (
+      cleanLc === 'garlic' ||
+      cleanLc === 'garlic clove' ||
+      cleanLc === 'garlic cloves' ||
+      cleanLc.startsWith('garlic clove') ||
+      (unitLc.includes('clove') && cleanLc === 'garlic')
+    ) {
+      return ['garlic'];
+    }
+
+    // Sanitize the name part (strip any stray numbers/symbols), keep the quantity
+    const purName = sanitizeFinalIngredientString(cleanName)[0] ?? cleanName;
+    const qtyStr  = formatQuantity(item.quantity);
+    return [`${qtyStr} ${item.unit.trim()} ${purName}`.trim()];
   }
 
-  // ── Step 2: Decide whether to include a quantity ─────────
+  // ── NAME-ONLY PATHS ──────────────────────────────────────
+  // Pass the RAW name to sanitizeFinalIngredientString so commas are preserved
+  // for splitting. sanitize handles: split on commas, strip numbers, strip
+  // symbols, strip prep words from each part.
+  //
+  // ".5 & .5 garlic, pepper, salt"  → ["garlic", "pepper", "salt"]
+  // "2 tablespoons butter"  (unit handled above, name is just "butter") → ["butter"]
 
-  // Spices & Seasonings never need a quantity on a grocery list
+  // Spices & Seasonings: always name-only
   if (item.grocerySection === 'Spices & Seasonings') {
-    return cleanName;
+    return sanitizeFinalIngredientString(item.name);
   }
 
-  // COOKING VOLUME UNIT → drop quantity entirely, show name only
-  //   "2 tablespoons butter"   → "butter"
-  //   "1 c diced potatoes"     → "potatoes"
-  //   "3 tbsp parsley"         → "parsley"
+  // Cooking volume unit: drop quantity, split/clean name
   if (COOKING_VOLUME_UNITS.has(unitLc)) {
-    return cleanName;
+    return sanitizeFinalIngredientString(item.name);
   }
 
-  // No quantity (zero or empty) → just the name
+  // No quantity
   if (!item.quantity || item.quantity === 0) {
-    return cleanName;
+    return sanitizeFinalIngredientString(item.name);
   }
 
-  // Empty unit + fractional quantity = malformed data entry
-  // (full recipe line was stored in name field) → show name only
+  // Empty unit + fractional quantity = malformed data
   if (item.unit.trim() === '' && item.quantity % 1 !== 0) {
-    return cleanName;
+    return sanitizeFinalIngredientString(item.name);
   }
 
-  // PURCHASE UNIT → keep the quantity, it's useful to the shopper
-  //   "1 1/2 lbs sirloin tips" → keep
-  //   "2 cans tomatoes"        → keep
-  //   "1 bag green beans"      → keep
-  if (PURCHASE_UNITS.has(unitLc)) {
-    const qtyStr = formatQuantity(item.quantity);
-    const unitStr = item.unit.trim();
-    return `${qtyStr} ${unitStr} ${cleanName}`.trim();
-  }
-
-  // Unknown unit — conservative fallback: show name only
-  // Better to omit a quantity than to confuse the shopper
-  return cleanName;
+  // Unknown unit — safe fallback: name only
+  return sanitizeFinalIngredientString(item.name);
 }
 
 
@@ -228,9 +317,11 @@ export function generateGroceryExport(
     const sectionItems = items.filter((item) => item.grocerySection === section);
     if (sectionItems.length === 0) continue;
 
+    // flatMap because one item can expand to multiple clean strings
+    // (e.g. "garlic, pepper, salt" → ["garlic", "pepper", "salt"])
     result.set(
       section,
-      sectionItems.map((item) => cleanIngredientForGroceryExport(item))
+      sectionItems.flatMap((item) => cleanIngredientForGroceryExport(item))
     );
   }
 
@@ -277,7 +368,7 @@ export function debugGroceryNormalization(items: ShoppingListItem[]): void {
       .filter(Boolean)
       .join(' ')
       .trim();
-    const after = cleanIngredientForGroceryExport(item);
+    const after = cleanIngredientForGroceryExport(item).join(' | ');
     console.log(`"${before}"  →  "${after}"`);
   }
   console.groupEnd();
