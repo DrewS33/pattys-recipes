@@ -8,6 +8,7 @@ import {
   GrocerySection,
 } from '../types';
 import { importRecipeFromUrl } from '../utils/urlImporter';
+import { parseRecipeText } from '../utils/recipeTextParser';
 
 // ============================================================
 // AddEditRecipe: modal form for creating or editing a recipe
@@ -101,6 +102,9 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
   const [importStatus, setImportStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [importError, setImportError] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [showPastePanel, setShowPastePanel] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [parseNotice, setParseNotice] = useState(false);
 
   // Initialize form when modal opens
   useEffect(() => {
@@ -117,6 +121,9 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
       setImportUrl('');
       setImportStatus('idle');
       setImportError('');
+      setShowPastePanel(false);
+      setPasteText('');
+      setParseNotice(false);
     }
   }, [isOpen, recipe]);
 
@@ -148,6 +155,37 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
       setImportStatus('error');
       setImportError(e instanceof Error ? e.message : 'Failed to import recipe');
     }
+  };
+
+  // ---- Paste-text import ----
+  const handleParseText = () => {
+    if (!pasteText.trim()) return;
+    const parsed = parseRecipeText(pasteText);
+
+    setForm((prev) => {
+      const updated = { ...prev };
+      if (parsed.name)        updated.name        = parsed.name;
+      if (parsed.description) updated.description = parsed.description;
+      if (parsed.servings)    updated.defaultServings = parsed.servings;
+      if (parsed.prepTimeMinutes)  updated.prepTimeMinutes  = parsed.prepTimeMinutes;
+      if (parsed.cookTimeMinutes)  updated.cookTimeMinutes  = parsed.cookTimeMinutes;
+      if (parsed.totalTimeMinutes) updated.totalTimeMinutes = parsed.totalTimeMinutes;
+      else if (parsed.prepTimeMinutes && parsed.cookTimeMinutes) {
+        updated.totalTimeMinutes = parsed.prepTimeMinutes + parsed.cookTimeMinutes;
+      }
+      if (parsed.ingredients.length > 0) {
+        updated.ingredients = parsed.ingredients.map((ing) => ({ ...blankIngredient(), ...ing }));
+      }
+      if (parsed.instructions.length > 0) updated.instructions = parsed.instructions;
+      if (parsed.notes)       updated.notes       = parsed.notes;
+      if (parsed.proteinType) updated.proteinType = parsed.proteinType;
+      if (parsed.mealType)    updated.mealType    = parsed.mealType;
+      return updated;
+    });
+
+    setShowPastePanel(false);
+    setPasteText('');
+    setParseNotice(true);
   };
 
   // ---- Photo upload ----
@@ -320,6 +358,57 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
             <p className="text-stone-400 text-xs mt-2">Fills in the form automatically — you can review and edit before saving.</p>
           </section>
 
+          {/* Paste Recipe Text */}
+          <section className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-stone-600 uppercase tracking-widest">📋 Paste Recipe Text</h3>
+              <button
+                type="button"
+                onClick={() => { setShowPastePanel((v) => !v); setPasteText(''); }}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-800 underline transition-colors"
+              >
+                {showPastePanel ? 'Hide' : 'Open'}
+              </button>
+            </div>
+            {!showPastePanel && (
+              <p className="text-stone-400 text-xs mt-1">
+                Paste a recipe from any source — we'll fill in the form automatically.
+              </p>
+            )}
+            {showPastePanel && (
+              <div className="mt-3 space-y-2">
+                <p className="text-stone-500 text-xs leading-relaxed">
+                  Paste a recipe from a website, document, email, or notes. Works best when the recipe has clear "Ingredients" and "Instructions" sections.
+                </p>
+                <textarea
+                  autoFocus
+                  value={pasteText}
+                  onChange={(e) => setPasteText(e.target.value)}
+                  placeholder={"Mom's Chicken Soup\n\nA cozy family soup.\n\nServes 6\nPrep Time: 15 minutes\nCook Time: 45 minutes\n\nIngredients\n2 lb chicken breast\n1 onion, diced\n\nInstructions\n1. Dice the onion.\n2. Add to pot and simmer."}
+                  rows={12}
+                  className="w-full px-3 py-2.5 border-2 border-amber-200 rounded-xl text-sm focus:outline-none focus:border-primary-400 transition-colors bg-white resize-y font-mono"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleParseText}
+                    disabled={!pasteText.trim()}
+                    className="flex-1 py-3 sm:py-2.5 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors active:scale-[0.98]"
+                  >
+                    ✨ Parse Recipe
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowPastePanel(false); setPasteText(''); }}
+                    className="py-3 sm:py-2.5 px-4 bg-white border border-amber-200 text-stone-600 font-semibold rounded-xl text-sm hover:bg-amber-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
           {/* Photo upload */}
           <section>
             <h3 className="text-sm font-bold text-stone-600 uppercase tracking-widest mb-3">📷 Photo</h3>
@@ -343,6 +432,23 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
               </label>
             )}
           </section>
+
+          {/* Parse success notice */}
+          {parseNotice && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+              <span className="text-green-500 text-lg flex-shrink-0">✓</span>
+              <div className="flex-1">
+                <p className="text-green-800 font-semibold text-sm">Recipe text parsed!</p>
+                <p className="text-green-700 text-xs mt-0.5">We filled in what we could — please review before saving.</p>
+              </div>
+              <button
+                onClick={() => setParseNotice(false)}
+                className="text-green-400 hover:text-green-600 transition-colors flex-shrink-0 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Error messages */}
           {errors.length > 0 && (
