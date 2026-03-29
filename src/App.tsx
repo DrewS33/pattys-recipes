@@ -292,7 +292,7 @@ export default function App() {
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {recipeList.map((recipe) => (
           <RecipeCard
             key={recipe.id}
@@ -328,7 +328,7 @@ export default function App() {
 
       {/* Page content */}
       {/* pb-24 on mobile = room for fixed bottom tab bar */}
-      <main className="max-w-7xl mx-auto px-4 py-8 pb-28 sm:pb-8">
+      <main className="max-w-7xl mx-auto px-4 pt-5 sm:pt-8 pb-28 sm:pb-8">
 
         {/* ---- RECIPES TAB ---- */}
         {activeTab === 'recipes' && (
@@ -346,17 +346,19 @@ export default function App() {
                 <div className="flex items-center gap-2 no-print">
                   <button
                     onClick={handleExport}
-                    className="py-2 px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
+                    className="py-2 px-2.5 sm:px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
                     title="Export all recipes as JSON"
                   >
-                    📤 Export
+                    <span>📤</span>
+                    <span className="hidden sm:inline">Export</span>
                   </button>
                   <button
                     onClick={() => importFileRef.current?.click()}
-                    className="py-2 px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
+                    className="py-2 px-2.5 sm:px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"
                     title="Import recipes from JSON file"
                   >
-                    📥 Import
+                    <span>📥</span>
+                    <span className="hidden sm:inline">Import</span>
                   </button>
                   <input
                     ref={importFileRef}
@@ -367,9 +369,10 @@ export default function App() {
                   />
                   <button
                     onClick={handleOpenAdd}
-                    className="py-2 px-4 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 transition-colors shadow-sm flex items-center gap-1.5"
+                    className="py-2 px-3 sm:px-4 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 transition-colors shadow-sm flex items-center gap-1.5"
                   >
-                    + Add Recipe
+                    <span>+</span>
+                    <span className="hidden xs:inline sm:inline">Add Recipe</span>
                   </button>
                 </div>
               </div>
@@ -452,7 +455,7 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {favoriteRecipes.map((recipe) => (
                   <RecipeCard
                     key={recipe.id}

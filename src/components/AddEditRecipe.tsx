@@ -273,10 +273,10 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl my-4">
+      <div className="bg-white w-full max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl sm:my-4 max-h-[95vh] overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-5 rounded-t-2xl flex items-center justify-between">
           <h2 className="font-display text-xl font-bold text-stone-800">
@@ -291,25 +291,25 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
         </div>
 
         {/* Form body */}
-        <div className="p-6 space-y-6">
+        <div className="p-5 sm:p-6 space-y-6 flex-1 overflow-y-auto">
 
           {/* URL Import */}
           <section className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <h3 className="text-sm font-bold text-stone-600 uppercase tracking-widest mb-3">🔗 Import from URL</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="url"
                 value={importUrl}
                 onChange={(e) => { setImportUrl(e.target.value); setImportStatus('idle'); }}
                 onKeyDown={(e) => e.key === 'Enter' && handleImportUrl()}
                 placeholder="Paste a recipe URL (AllRecipes, Food Network, NYT Cooking…)"
-                className="flex-1 px-3 py-2.5 border-2 border-amber-200 rounded-xl text-sm focus:outline-none focus:border-primary-400 transition-colors bg-white"
+                className="flex-1 px-3 py-3 sm:py-2.5 border-2 border-amber-200 rounded-xl text-sm focus:outline-none focus:border-primary-400 transition-colors bg-white"
               />
               <button
                 type="button"
                 onClick={handleImportUrl}
                 disabled={importStatus === 'loading' || !importUrl.trim()}
-                className="px-4 py-2.5 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors flex-shrink-0"
+                className="px-4 py-3 sm:py-2.5 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors flex-shrink-0"
               >
                 {importStatus === 'loading' ? '⏳ Importing…' : 'Import'}
               </button>
@@ -652,16 +652,16 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
         </div>
 
         {/* Footer buttons */}
-        <div className="px-6 pb-6 flex gap-3">
+        <div className="px-5 sm:px-6 pb-6 pt-3 flex gap-3 border-t border-stone-100 bg-white sticky bottom-0">
           <button
             onClick={handleSave}
-            className="flex-1 py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md"
+            className="flex-1 py-4 sm:py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md active:scale-[0.98]"
           >
             {recipe ? '💾 Save Changes' : '✓ Add Recipe'}
           </button>
           <button
             onClick={onClose}
-            className="py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl text-base hover:bg-gray-200 transition-colors"
+            className="py-4 sm:py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl text-base hover:bg-gray-200 transition-colors active:scale-[0.98]"
           >
             Cancel
           </button>

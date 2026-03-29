@@ -125,38 +125,38 @@ export default function ShoppingList({
       </div>
 
       {/* Action buttons — hidden when printing */}
-      <div className="flex flex-wrap gap-2 mb-6 no-print">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-6 no-print">
         <button
           onClick={() => window.print()}
-          className="py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center gap-1"
+          className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
         >
           🖨️ Print
         </button>
         <button
           onClick={handleCopyText}
-          className="py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center gap-1"
+          className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
         >
-          📋 Copy as Text
+          📋 Copy
         </button>
         <button
           onClick={() => setShowSmartExport(true)}
-          className="py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
+          className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
                      hover:bg-primary-100 transition-colors border border-primary-200
-                     flex items-center gap-1"
+                     flex items-center justify-center gap-1"
         >
           🛍️ Export Grocery-Friendly List
         </button>
         {checkedCount > 0 && (
           <button
             onClick={onClearChecked}
-            className="py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center gap-1"
+            className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center justify-center gap-1"
           >
             ✓ Clear Checked ({checkedCount})
           </button>
         )}
         <button
           onClick={onClearList}
-          className="py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center gap-1 ml-auto"
+          className="col-span-2 sm:col-auto sm:ml-auto py-3 sm:py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-1"
         >
           🗑️ Clear All
         </button>
@@ -170,7 +170,7 @@ export default function ShoppingList({
 
           return (
             <div key={section}>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
                 <span className="text-2xl">{GROCERY_SECTION_ICONS[section]}</span>
                 <h3 className="font-display text-base font-bold text-primary-800">{section}</h3>
                 <div className="flex-1 flex items-center mx-1">
@@ -187,12 +187,12 @@ export default function ShoppingList({
                   return (
                     <li
                       key={key}
-                      className="flex items-start gap-3 p-3 rounded-xl border bg-white border-gray-200 hover:border-primary-200 hover:bg-primary-50 transition-all cursor-pointer"
+                      className="flex items-center gap-3 p-4 rounded-xl border bg-white border-gray-200 hover:border-primary-200 hover:bg-primary-50 transition-all cursor-pointer active:scale-[0.99] min-h-[64px]"
                       onClick={() => onToggleCheck(key)}
                     >
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mt-0.5 transition-all" />
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center transition-all" />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-baseline gap-2 flex-wrap">
                           <span className="text-base font-bold text-gray-800">
                             {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
                           </span>
@@ -226,10 +226,10 @@ export default function ShoppingList({
               return (
                 <li
                   key={key}
-                  className="flex items-start gap-3 p-3 rounded-xl border bg-stone-50 border-stone-100 opacity-50 cursor-pointer hover:opacity-70 transition-all"
+                  className="flex items-center gap-3 p-4 rounded-xl border bg-stone-50 border-stone-100 opacity-50 cursor-pointer hover:opacity-70 transition-all min-h-[64px]"
                   onClick={() => onToggleCheck(key)}
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-400 border-2 border-primary-400 flex items-center justify-center mt-0.5">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-400 border-2 border-primary-400 flex items-center justify-center">
                     <span className="text-xs font-bold text-white">✓</span>
                   </div>
                   <div className="flex-1 min-w-0">

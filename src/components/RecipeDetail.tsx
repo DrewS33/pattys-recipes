@@ -109,7 +109,7 @@ export default function RecipeDetail({
         <div className="bg-amber-50 border-b border-amber-200 p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h2 className="font-display text-2xl font-bold text-stone-800 leading-tight mb-1">{recipe.name}</h2>
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-tight mb-1">{recipe.name}</h2>
               <div className="mb-2">
                 <StarRating
                   rating={recipe.rating}
@@ -163,22 +163,22 @@ export default function RecipeDetail({
         </div>
 
         {/* Info bar */}
-        <div className="bg-white px-6 py-3 flex flex-wrap gap-6 border-b border-amber-100">
+        <div className="bg-white px-6 py-3 grid grid-cols-4 gap-2 border-b border-amber-100">
           <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Prep</p>
-            <p className="text-base font-bold text-gray-800">{formatTime(recipe.prepTimeMinutes)}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Prep</p>
+            <p className="text-sm sm:text-base font-bold text-gray-800">{formatTime(recipe.prepTimeMinutes)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Cook</p>
-            <p className="text-base font-bold text-gray-800">{formatTime(recipe.cookTimeMinutes)}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Cook</p>
+            <p className="text-sm sm:text-base font-bold text-gray-800">{formatTime(recipe.cookTimeMinutes)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
-            <p className="text-base font-bold text-gray-800">{formatTime(recipe.totalTimeMinutes)}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Total</p>
+            <p className="text-sm sm:text-base font-bold text-gray-800">{formatTime(recipe.totalTimeMinutes)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Default Servings</p>
-            <p className="text-base font-bold text-gray-800">{recipe.defaultServings}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Servings</p>
+            <p className="text-sm sm:text-base font-bold text-gray-800">{recipe.defaultServings}</p>
           </div>
         </div>
 
@@ -247,25 +247,25 @@ export default function RecipeDetail({
         </div>
 
         {/* Footer action buttons */}
-        <div className="px-6 pb-6 flex flex-wrap gap-3">
+        <div className="px-6 pb-6 flex flex-col sm:flex-row gap-3">
           {isSelected ? (
             <button
               onClick={() => onRemoveFromList(recipe.id)}
-              className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl text-base hover:bg-red-600 transition-colors shadow-md"
+              className="flex-1 py-4 sm:py-3 px-6 bg-red-500 text-white font-bold rounded-xl text-base hover:bg-red-600 transition-colors shadow-md active:scale-[0.98]"
             >
               ✕ Remove from Shopping List
             </button>
           ) : (
             <button
               onClick={() => onAddToList(recipe, multiplier)}
-              className="flex-1 py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md"
+              className="flex-1 py-4 sm:py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md active:scale-[0.98]"
             >
               🛒 Add to Shopping List
             </button>
           )}
           <button
             onClick={handlePrint}
-            className="py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl text-base hover:bg-gray-200 transition-colors"
+            className="py-4 sm:py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl text-base hover:bg-gray-200 transition-colors active:scale-[0.98]"
           >
             🖨️ Print Recipe
           </button>

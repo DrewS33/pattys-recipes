@@ -111,47 +111,49 @@ export default function MealPlanner({
   return (
     <div className="pb-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 className="font-display text-2xl font-bold text-stone-800">📅 Meal Planner</h2>
-          <p className="text-stone-500 text-sm mt-0.5">Plan your week, then build your shopping list</p>
-        </div>
-
-        {/* Week navigation */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setWeekOffset((w) => w - 1)}
-            className="w-9 h-9 rounded-full border border-amber-200 bg-white hover:bg-amber-50 text-stone-600 flex items-center justify-center transition-colors"
-          >
-            ‹
-          </button>
-          <div className="text-center min-w-[160px]">
-            <p className="text-sm font-bold text-stone-700">
-              {weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : `Week of ${formatWeekRange(weekDays)}`}
-            </p>
-            <p className="text-xs text-stone-400">{formatWeekRange(weekDays)}</p>
+      <div className="mb-6">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-stone-800">📅 Meal Planner</h2>
+            <p className="text-stone-500 text-sm mt-0.5">Plan your week, then build your shopping list</p>
           </div>
-          <button
-            onClick={() => setWeekOffset((w) => w + 1)}
-            className="w-9 h-9 rounded-full border border-amber-200 bg-white hover:bg-amber-50 text-stone-600 flex items-center justify-center transition-colors"
-          >
-            ›
-          </button>
+
+          {/* Week navigation */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setWeekOffset((w) => w - 1)}
+              className="w-9 h-9 rounded-full border border-amber-200 bg-white hover:bg-amber-50 text-stone-600 flex items-center justify-center transition-colors"
+            >
+              ‹
+            </button>
+            <div className="text-center min-w-[120px] sm:min-w-[160px]">
+              <p className="text-sm font-bold text-stone-700">
+                {weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : `Week ${weekOffset > 0 ? '+' : ''}${weekOffset}`}
+              </p>
+              <p className="text-xs text-stone-400">{formatWeekRange(weekDays)}</p>
+            </div>
+            <button
+              onClick={() => setWeekOffset((w) => w + 1)}
+              className="w-9 h-9 rounded-full border border-amber-200 bg-white hover:bg-amber-50 text-stone-600 flex items-center justify-center transition-colors"
+            >
+              ›
+            </button>
+          </div>
         </div>
 
-        {/* Add to shopping list */}
+        {/* Add to shopping list — full width on mobile */}
         {weekRecipes.length > 0 && (
           <button
             onClick={() => onAddToShoppingList(weekRecipes)}
-            className="py-2.5 px-5 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 transition-colors shadow-sm flex items-center gap-2"
+            className="w-full sm:w-auto py-3 sm:py-2.5 px-5 bg-primary-600 text-white font-bold rounded-xl text-sm hover:bg-primary-700 transition-colors shadow-sm flex items-center justify-center gap-2 active:scale-[0.98]"
           >
             🛒 Add {weekRecipes.length} recipe{weekRecipes.length !== 1 ? 's' : ''} to shopping list
           </button>
         )}
       </div>
 
-      {/* Calendar grid — scroll horizontally on mobile */}
-      <div className="overflow-x-auto pb-2">
+      {/* ── Desktop calendar grid (hidden on mobile) ── */}
+      <div className="hidden sm:block overflow-x-auto pb-2">
         <div className="min-w-[700px]">
           {/* Day headers */}
           <div className="grid grid-cols-8 gap-2 mb-2">
@@ -227,6 +229,78 @@ export default function MealPlanner({
         </div>
       </div>
 
+      {/* ── Mobile day-card list (hidden on desktop) ── */}
+      <div className="sm:hidden space-y-3">
+        {weekDays.map((day, i) => {
+          const dk = dateKey(day);
+          const isToday = dk === today;
+          return (
+            <div
+              key={dk}
+              className={`rounded-2xl border overflow-hidden ${
+                isToday ? 'border-primary-300 shadow-card' : 'border-amber-100 bg-white'
+              }`}
+            >
+              {/* Day header */}
+              <div className={`px-4 py-2.5 flex items-center gap-2 ${isToday ? 'bg-primary-50' : 'bg-amber-50/60'}`}>
+                <span className={`font-display font-bold text-lg ${isToday ? 'text-primary-700' : 'text-stone-700'}`}>
+                  {day.getDate()}
+                </span>
+                <span className={`text-sm font-semibold ${isToday ? 'text-primary-600' : 'text-stone-500'}`}>
+                  {DAY_NAMES_FULL[i]}
+                </span>
+                {isToday && (
+                  <span className="ml-auto text-xs font-bold text-primary-600 bg-primary-100 px-2 py-0.5 rounded-full">Today</span>
+                )}
+              </div>
+
+              {/* Meal slots */}
+              <div className="divide-y divide-amber-50">
+                {MEAL_SLOTS.map(({ key: mealKey, label, icon }) => {
+                  const recipe = getRecipe(mealPlan[dk]?.[mealKey]);
+                  return (
+                    <div key={mealKey} className="flex items-center gap-3 px-4 py-3">
+                      <span className="text-base w-6 flex-shrink-0">{icon}</span>
+                      <span className="text-xs font-bold text-stone-400 uppercase tracking-wide w-16 flex-shrink-0">{label}</span>
+                      {recipe ? (
+                        <div className="flex-1 flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => {
+                              setPickerSearch('');
+                              setPicker({ dateKey: dk, meal: mealKey, dayLabel: DAY_NAMES_FULL[i], mealLabel: label });
+                            }}
+                            className="flex-1 text-left text-sm font-semibold text-stone-700 leading-tight"
+                          >
+                            {recipe.name}
+                          </button>
+                          <button
+                            onClick={() => setMeal(dk, mealKey, undefined)}
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-stone-100 text-stone-400 hover:bg-red-100 hover:text-red-400 flex items-center justify-center text-xs transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setPickerSearch('');
+                            setPicker({ dateKey: dk, meal: mealKey, dayLabel: DAY_NAMES_FULL[i], mealLabel: label });
+                          }}
+                          className="flex-1 py-2 border-2 border-dashed border-amber-200 rounded-xl text-stone-300 hover:border-primary-300 hover:text-primary-400 hover:bg-primary-50 transition-all text-sm flex items-center justify-center gap-1"
+                        >
+                          <span>+</span>
+                          <span>Add {label}</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Empty state */}
       {weekRecipes.length === 0 && (
         <div className="text-center py-8 text-stone-400 text-sm italic">
@@ -237,10 +311,10 @@ export default function MealPlanner({
       {/* Recipe picker modal */}
       {picker && (
         <div
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center sm:p-4"
           onClick={(e) => e.target === e.currentTarget && setPicker(null)}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="modal-slide-up bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             {/* Picker header */}
             <div className="bg-amber-50 border-b border-amber-200 px-5 py-4 flex items-center justify-between">
               <div>

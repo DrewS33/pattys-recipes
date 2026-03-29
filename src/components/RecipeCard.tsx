@@ -89,7 +89,7 @@ export default function RecipeCard({
       `}
     >
       {/* ── Photo / gradient ── */}
-      <div className="relative h-52 overflow-hidden">
+      <div className="relative h-44 sm:h-52 overflow-hidden">
         {recipe.image ? (
           <img
             src={recipe.image}
@@ -187,7 +187,7 @@ export default function RecipeCard({
         <div className="flex gap-2 pt-0.5">
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-2.5 px-3 bg-stone-50 hover:bg-stone-100 text-stone-500
+            className="flex-1 py-3 sm:py-2.5 px-3 bg-stone-50 hover:bg-stone-100 text-stone-500
                        hover:text-stone-700 rounded-xl text-sm font-medium
                        transition-all duration-150 active:scale-[0.97]"
           >
@@ -196,7 +196,7 @@ export default function RecipeCard({
           <button
             onClick={() => onSelect(recipe)}
             className={`
-              flex-1 py-2.5 px-3 font-semibold rounded-xl text-sm
+              flex-1 py-3 sm:py-2.5 px-3 font-semibold rounded-xl text-sm
               transition-all duration-150 active:scale-[0.97]
               ${isSelected
                 ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500'
@@ -204,7 +204,7 @@ export default function RecipeCard({
               }
             `}
           >
-            {isSelected ? '✕ Remove' : '+ Add to Shopping List'}
+            {isSelected ? '✕ Remove' : '+ Add to List'}
           </button>
         </div>
 
