@@ -57,6 +57,15 @@ body {
   animation: filterPanelIn 0.15s ease-out both;
 }
 
+/* Smart Export modal — slides up from bottom on mobile, fades in on desktop */
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-slide-up {
+  animation: modalSlideUp 0.2s ease-out both;
+}
+
 /* Print styles */
 @media print {
   .no-print {

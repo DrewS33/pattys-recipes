@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SelectedRecipe, ShoppingListItem } from '../types';
 import { mergeIngredients, formatQuantity } from '../utils/ingredientMerger';
 import { GROCERY_SECTION_ORDER, GROCERY_SECTION_ICONS } from '../utils/grocerySections';
+import SmartExportModal from './SmartExportModal';
 
 // ============================================================
 // ShoppingList: grouped, checkable shopping list page
@@ -27,6 +28,8 @@ export default function ShoppingList({
   onClearList,
   onClearChecked,
 }: ShoppingListProps) {
+  const [showSmartExport, setShowSmartExport] = useState(false);
+
   // Merge all ingredients from selected recipes
   const allItems = useMemo(() => mergeIngredients(selectedRecipes), [selectedRecipes]);
 
@@ -133,6 +136,14 @@ export default function ShoppingList({
           className="py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center gap-1"
         >
           📋 Copy as Text
+        </button>
+        <button
+          onClick={() => setShowSmartExport(true)}
+          className="py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
+                     hover:bg-primary-100 transition-colors border border-primary-200
+                     flex items-center gap-1"
+        >
+          🛍️ Export Grocery-Friendly List
         </button>
         {checkedCount > 0 && (
           <button
@@ -247,5 +258,13 @@ export default function ShoppingList({
         </div>
       )}
     </div>
+
+    {/* Smart Grocery Export modal */}
+    {showSmartExport && (
+      <SmartExportModal
+        items={allItems}
+        onClose={() => setShowSmartExport(false)}
+      />
+    )}
   );
 }
