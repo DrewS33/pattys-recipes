@@ -80,6 +80,7 @@ export default function ShoppingList({
   }
 
   return (
+    <>
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6">
@@ -266,5 +267,6 @@ export default function ShoppingList({
         onClose={() => setShowSmartExport(false)}
       />
     )}
+    </>
   );
 }
