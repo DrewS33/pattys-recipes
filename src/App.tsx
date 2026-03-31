@@ -1,7 +1,9 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Recipe, SelectedRecipe, Filters, MealPlan } from './types';
+import { Recipe, SelectedRecipe, Filters, MealPlan, PantryItem } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { sampleRecipes } from './data/recipes';
+import { DEFAULT_PANTRY_ITEMS } from './data/pantryData';
+import { isPantryStaple } from './utils/pantryUtils';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
 import RecipeCard from './components/RecipeCard';
@@ -10,6 +12,7 @@ import SelectedRecipesPanel from './components/SelectedRecipesPanel';
 import ShoppingList from './components/ShoppingList';
 import AddEditRecipe from './components/AddEditRecipe';
 import MealPlanner from './components/MealPlanner';
+import Pantry from './components/Pantry';
 import { mergeIngredients } from './utils/ingredientMerger';
 
 // ============================================================
@@ -52,6 +55,12 @@ export default function App() {
   // Meal plan — date key → { breakfast, lunch, dinner } recipe IDs
   const [mealPlan, setMealPlan] = useLocalStorage<MealPlan>('mealPlan', {});
 
+  // Pantry staples — which items the user already has at home
+  const [pantryItems, setPantryItems] = useLocalStorage<PantryItem[]>(
+    'pantryItems',
+    DEFAULT_PANTRY_ITEMS
+  );
+
   // Merge any new seed recipes into existing localStorage data (handles returning users)
   useEffect(() => {
     const existingIds = new Set(recipes.map((r) => r.id));
@@ -64,7 +73,7 @@ export default function App() {
 
   // ---- Local (non-persisted) UI state ----
 
-  const [activeTab, setActiveTab] = useState<'recipes' | 'shopping' | 'favorites' | 'planner'>('recipes');
+  const [activeTab, setActiveTab] = useState<'recipes' | 'shopping' | 'pantry' | 'planner'>('recipes');
   const importFileRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [activeRecipeDetail, setActiveRecipeDetail] = useState<Recipe | null>(null);
@@ -80,10 +89,12 @@ export default function App() {
     [selectedRecipes]
   );
 
-  // ---- Shopping list count (for nav badge) ----
+  // ---- Shopping list count (for nav badge — excludes pantry staples) ----
   const shoppingListCount = useMemo(() => {
-    return mergeIngredients(selectedRecipes).length;
-  }, [selectedRecipes]);
+    return mergeIngredients(selectedRecipes).filter(
+      (item) => !isPantryStaple(item.name, pantryItems)
+    ).length;
+  }, [selectedRecipes, pantryItems]);
 
   // ---- Filtering ----
 
@@ -117,12 +128,8 @@ export default function App() {
     [filters, favoriteSet]
   );
 
-  // Filtered recipe lists for each tab
+  // Filtered recipe list for the Recipes tab
   const filteredRecipes = useMemo(() => getFilteredRecipes(recipes), [getFilteredRecipes, recipes]);
-  const favoriteRecipes = useMemo(
-    () => recipes.filter((r) => favoriteSet.has(r.id)),
-    [recipes, favoriteSet]
-  );
 
   // ---- Handlers ----
 
@@ -433,49 +440,16 @@ export default function App() {
             onToggleCheck={handleToggleCheck}
             onClearList={handleClearList}
             onClearChecked={handleClearChecked}
+            pantryItems={pantryItems}
           />
         )}
 
-        {/* ---- FAVORITES TAB ---- */}
-        {activeTab === 'favorites' && (
-          <div>
-            <div className="mb-6">
-              <h2 className="font-display text-2xl font-bold text-stone-800 mb-1">⭐ Your Favorites</h2>
-              <p className="text-stone-500 text-sm">
-                {favoriteRecipes.length} favorite recipe{favoriteRecipes.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {favoriteRecipes.length === 0 ? (
-              <div className="text-center py-24 px-4">
-                <div className="text-7xl mb-4">⭐</div>
-                <h3 className="font-display text-xl font-bold text-stone-600 mb-2">No favorites yet</h3>
-                <p className="text-stone-400 text-base leading-relaxed">
-                  Tap the ⭐ star on any recipe card to save your family's go-to meals here.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {favoriteRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    isSelected={selectedIds.has(recipe.id)}
-                    isFavorite={true}
-                    onSelect={(r) => {
-                      if (selectedIds.has(r.id)) {
-                        handleRemoveFromList(r.id);
-                      } else {
-                        handleAddToList(r, 1);
-                      }
-                    }}
-                    onViewDetail={handleViewDetail}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+        {/* ---- PANTRY TAB ---- */}
+        {activeTab === 'pantry' && (
+          <Pantry
+            pantryItems={pantryItems}
+            onUpdatePantry={setPantryItems}
+          />
         )}
       </main>
 

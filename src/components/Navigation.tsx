@@ -4,8 +4,8 @@
 // ============================================================
 
 interface NavigationProps {
-  activeTab: 'recipes' | 'shopping' | 'favorites' | 'planner';
-  onTabChange: (tab: 'recipes' | 'shopping' | 'favorites' | 'planner') => void;
+  activeTab: 'recipes' | 'shopping' | 'pantry' | 'planner';
+  onTabChange: (tab: 'recipes' | 'shopping' | 'pantry' | 'planner') => void;
   shoppingListCount: number;
   selectedRecipesCount: number;
 }
@@ -14,7 +14,7 @@ const tabs = [
   { id: 'recipes' as const, label: 'Recipes', icon: '📖' },
   { id: 'planner' as const, label: 'Planner', icon: '📅' },
   { id: 'shopping' as const, label: 'Shopping', icon: '🛒' },
-  { id: 'favorites' as const, label: 'Favorites', icon: '⭐' },
+  { id: 'pantry' as const, label: 'Pantry', icon: '🥫' },
 ];
 
 export default function Navigation({

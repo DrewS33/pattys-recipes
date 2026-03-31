@@ -113,6 +113,25 @@ export interface MealPlanDay {
 export type MealPlan = Record<string, MealPlanDay>; // key: "2026-03-24"
 
 // ============================================================
+// PANTRY STAPLES
+// ============================================================
+export type PantryCategory =
+  | 'Baking'
+  | 'Oils & Fats'
+  | 'Spices'
+  | 'Dairy Basics'
+  | 'Dry Goods'
+  | 'Other';
+
+export interface PantryItem {
+  id: string;
+  name: string;
+  category: PantryCategory;
+  inPantry: boolean;
+  isCustom?: boolean;
+}
+
+// ============================================================
 // FILTERS - what the user has selected in the filter bar
 // ============================================================
 export interface Filters {
