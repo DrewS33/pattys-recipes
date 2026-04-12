@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { MealPlanDay } from './types';
 import { Recipe, SelectedRecipe, Filters, MealPlan, PantryItem } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { sampleRecipes } from './data/recipes';
@@ -13,6 +14,7 @@ import ShoppingList from './components/ShoppingList';
 import AddEditRecipe from './components/AddEditRecipe';
 import MealPlanner from './components/MealPlanner';
 import Pantry from './components/Pantry';
+import PlanDayPicker from './components/PlanDayPicker';
 import { mergeIngredients } from './utils/ingredientMerger';
 
 // ============================================================
@@ -80,6 +82,11 @@ export default function App() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
+  // Plan-for-day shortcut state
+  const [planningRecipe, setPlanningRecipe] = useState<Recipe | null>(null);
+  const [planToast, setPlanToast] = useState<string | null>(null);
+  const planToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Derived sets for O(1) lookups
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
@@ -240,6 +247,25 @@ export default function App() {
     );
   }, [setRecipes]);
 
+  // ---- Plan-for-day shortcut ----
+  const handleAssignToPlanner = useCallback(
+    (dateKey: string, meal: keyof MealPlanDay, dayLabel: string, mealLabel: string) => {
+      if (!planningRecipe) return;
+      const updated = {
+        ...mealPlan,
+        [dateKey]: { ...mealPlan[dateKey], [meal]: planningRecipe.id },
+      };
+      setMealPlan(updated);
+      setPlanningRecipe(null);
+      // Show toast
+      const msg = `Planned for ${dayLabel} ${mealLabel.toLowerCase()}`;
+      setPlanToast(msg);
+      if (planToastTimer.current) clearTimeout(planToastTimer.current);
+      planToastTimer.current = setTimeout(() => setPlanToast(null), 2800);
+    },
+    [planningRecipe, mealPlan, setMealPlan]
+  );
+
   // ---- Meal planner ----
   const handleAddMealPlanToList = useCallback((planRecipes: Recipe[]) => {
     planRecipes.forEach((recipe) => {
@@ -315,6 +341,7 @@ export default function App() {
             }}
             onViewDetail={handleViewDetail}
             onToggleFavorite={handleToggleFavorite}
+            onPlanForDay={setPlanningRecipe}
           />
         ))}
       </div>
@@ -482,6 +509,25 @@ export default function App() {
         }}
         onSave={handleSaveRecipe}
       />
+
+      {/* Plan for Day modal */}
+      {planningRecipe && (
+        <PlanDayPicker
+          recipe={planningRecipe}
+          mealPlan={mealPlan}
+          onSelect={handleAssignToPlanner}
+          onClose={() => setPlanningRecipe(null)}
+        />
+      )}
+
+      {/* Plan toast */}
+      {planToast && (
+        <div className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-[70] pointer-events-none">
+          <div className="bg-stone-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-xl whitespace-nowrap animate-fade-in">
+            📅 {planToast}
+          </div>
+        </div>
+      )}
 
       {/* Edit/Delete buttons accessible from detail modal */}
       {isDetailOpen && activeRecipeDetail && (

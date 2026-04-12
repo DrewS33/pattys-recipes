@@ -66,6 +66,15 @@ body {
   animation: modalSlideUp 0.2s ease-out both;
 }
 
+/* Plan toast fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.18s ease-out both;
+}
+
 /* Print styles */
 @media print {
   .no-print {

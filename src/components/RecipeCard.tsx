@@ -12,6 +12,7 @@ interface RecipeCardProps {
   onSelect: (recipe: Recipe) => void;
   onViewDetail: (recipe: Recipe) => void;
   onToggleFavorite: (id: string) => void;
+  onPlanForDay?: (recipe: Recipe) => void;
 }
 
 const PROTEIN_EMOJI: Record<string, string> = {
@@ -69,6 +70,7 @@ export default function RecipeCard({
   onSelect,
   onViewDetail,
   onToggleFavorite,
+  onPlanForDay,
 }: RecipeCardProps) {
   const emoji    = PROTEIN_EMOJI[recipe.proteinType] || '🍴';
   const gradient = CARD_GRADIENTS[recipe.proteinType] || 'from-stone-200 to-stone-400';
@@ -206,6 +208,20 @@ export default function RecipeCard({
           >
             {isSelected ? '✕ Remove' : '+ Add to List'}
           </button>
+          {onPlanForDay && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onPlanForDay(recipe); }}
+              aria-label="Plan for Day"
+              title="Plan for Day"
+              className="flex-shrink-0 w-11 py-3 sm:py-2.5 bg-stone-50 hover:bg-amber-50
+                         border border-stone-100 hover:border-amber-300
+                         text-stone-400 hover:text-amber-600
+                         rounded-xl text-base flex items-center justify-center
+                         transition-all duration-150 active:scale-[0.97]"
+            >
+              📅
+            </button>
+          )}
         </div>
 
       </div>
