@@ -9,6 +9,7 @@ import { Recipe, MealPlan, MealPlanDay } from '../types';
 
 interface PlanDayPickerProps {
   recipe: Recipe;
+  recipes: Recipe[];       // full list — used to look up names in occupied slots
   mealPlan: MealPlan;
   onSelect: (dateKey: string, meal: keyof MealPlanDay, dayLabel: string, mealLabel: string) => void;
   onClose: () => void;
@@ -22,11 +23,11 @@ const MEAL_SLOTS: Array<{ key: keyof MealPlanDay; label: string; icon: string }>
 
 const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const WEEK_RANGE_FMT: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-const DAY_DATE_FMT: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+const DAY_DATE_FMT:   Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
 
 function getWeekDays(weekOffset: number): Date[] {
   const today = new Date();
-  const day = today.getDay(); // 0 = Sun
+  const day = today.getDay();
   const diffToMon = day === 0 ? -6 : 1 - day;
   const monday = new Date(today);
   monday.setDate(today.getDate() + diffToMon + weekOffset * 7);
@@ -43,18 +44,34 @@ function dateKey(date: Date): string {
 }
 
 function formatWeekRange(days: Date[]): string {
-  return `${days[0].toLocaleDateString('en-US', WEEK_RANGE_FMT)} – ${days[6].toLocaleDateString('en-US', WEEK_RANGE_FMT)}`;
+  return (
+    days[0].toLocaleDateString('en-US', WEEK_RANGE_FMT) +
+    ' – ' +
+    days[6].toLocaleDateString('en-US', WEEK_RANGE_FMT)
+  );
 }
 
-export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: PlanDayPickerProps) {
+export default function PlanDayPicker({
+  recipe,
+  recipes,
+  mealPlan,
+  onSelect,
+  onClose,
+}: PlanDayPickerProps) {
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const weekDays = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
-  const todayKey = dateKey(new Date());
+  const weekDays  = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
+  const todayKey  = dateKey(new Date());
+
+  // O(1) recipe name lookup for occupied slots
+  const recipeMap = useMemo(
+    () => new Map(recipes.map((r) => [r.id, r])),
+    [recipes]
+  );
 
   const weekLabel =
-    weekOffset === 0 ? 'This Week' :
-    weekOffset === 1 ? 'Next Week' :
+    weekOffset === 0  ? 'This Week' :
+    weekOffset === 1  ? 'Next Week' :
     weekOffset === -1 ? 'Last Week' :
     formatWeekRange(weekDays);
 
@@ -65,24 +82,35 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
     >
       <div className="modal-slide-up bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
 
-        {/* ── Sticky header — stays visible while day list scrolls ── */}
+        {/* ── Sticky header — outside the scroll container, always visible ── */}
         <div className="bg-amber-50 border-b border-amber-200 flex-shrink-0">
 
-          {/* Title row */}
-          <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-display font-bold text-stone-800 text-base leading-tight">
-                Plan for Day
-              </h3>
-              {/* Recipe name — truncated with ellipsis, never wraps */}
-              <p
-                className="text-xs text-stone-500 mt-1 font-medium"
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}
-                title={recipe.name}
-              >
-                {recipe.name}
-              </p>
+          {/* Title + recipe identity row */}
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Thumbnail — only rendered when the recipe has an image */}
+              {recipe.image && (
+                <img
+                  src={recipe.image}
+                  alt=""
+                  className="flex-shrink-0 w-9 h-9 rounded-lg object-cover shadow-sm border border-amber-200"
+                />
+              )}
+              <div className="min-w-0">
+                <h3 className="font-display font-bold text-stone-800 text-base leading-tight">
+                  Plan for Day
+                </h3>
+                {/* Recipe name — single line, ellipsis on overflow */}
+                <p
+                  className="text-xs text-stone-500 font-medium mt-0.5 truncate"
+                  style={{ maxWidth: recipe.image ? '180px' : '220px' }}
+                  title={recipe.name}
+                >
+                  {recipe.name}
+                </p>
+              </div>
             </div>
+
             <button
               onClick={onClose}
               className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-amber-200 flex items-center justify-center text-stone-500 hover:bg-amber-100 transition-colors"
@@ -92,11 +120,11 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
             </button>
           </div>
 
-          {/* Week navigation row */}
-          <div className="px-4 pb-3 flex items-center justify-between gap-2">
+          {/* Week navigation */}
+          <div className="px-4 pb-3 flex items-center gap-2">
             <button
               onClick={() => setWeekOffset((w) => w - 1)}
-              className="w-8 h-8 rounded-full border border-amber-200 bg-white hover:bg-amber-100 text-stone-600 flex items-center justify-center transition-colors text-sm font-bold flex-shrink-0"
+              className="flex-shrink-0 w-8 h-8 rounded-full border border-amber-200 bg-white hover:bg-amber-100 text-stone-600 flex items-center justify-center transition-colors text-sm font-bold"
               aria-label="Previous week"
             >
               ‹
@@ -113,19 +141,18 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
 
             <button
               onClick={() => setWeekOffset((w) => w + 1)}
-              className="w-8 h-8 rounded-full border border-amber-200 bg-white hover:bg-amber-100 text-stone-600 flex items-center justify-center transition-colors text-sm font-bold flex-shrink-0"
+              className="flex-shrink-0 w-8 h-8 rounded-full border border-amber-200 bg-white hover:bg-amber-100 text-stone-600 flex items-center justify-center transition-colors text-sm font-bold"
               aria-label="Next week"
             >
               ›
             </button>
           </div>
-
         </div>
 
         {/* ── Day list — scrollable ── */}
         <div className="overflow-y-auto flex-1">
           {weekDays.map((day, i) => {
-            const dk = dateKey(day);
+            const dk      = dateKey(day);
             const isToday = dk === todayKey;
             const dayPlan = mealPlan[dk];
 
@@ -134,7 +161,7 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
                 key={dk}
                 className={`px-4 py-3 border-b border-amber-50 last:border-0 ${isToday ? 'bg-primary-50/40' : ''}`}
               >
-                {/* Day label row */}
+                {/* Day label */}
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className={`text-sm font-bold ${isToday ? 'text-primary-700' : 'text-stone-700'}`}>
                     {DAY_NAMES_FULL[i]}
@@ -152,20 +179,23 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
                 {/* Meal slot buttons */}
                 <div className="grid grid-cols-3 gap-2">
                   {MEAL_SLOTS.map(({ key: mealKey, label, icon }) => {
-                    const existingId = dayPlan?.[mealKey];
-                    const isThisRecipe = existingId === recipe.id;
-                    const hasOther = !!existingId && !isThisRecipe;
+                    const existingId     = dayPlan?.[mealKey];
+                    const isThisRecipe   = existingId === recipe.id;
+                    const hasOther       = !!existingId && !isThisRecipe;
+                    const assignedRecipe = hasOther ? recipeMap.get(existingId!) : undefined;
 
                     return (
                       <button
                         key={mealKey}
                         onClick={() => onSelect(dk, mealKey, DAY_NAMES_FULL[i], label)}
-                        aria-label={`Plan ${recipe.name} for ${DAY_NAMES_FULL[i]} ${label}${hasOther ? ' (replaces current)' : ''}`}
+                        aria-label={
+                          `Plan ${recipe.name} for ${DAY_NAMES_FULL[i]} ${label}` +
+                          (assignedRecipe ? ` (replaces ${assignedRecipe.name})` : '')
+                        }
                         className={`
-                          py-2.5 px-1 rounded-xl text-xs font-semibold
-                          flex flex-col items-center gap-1
+                          w-full px-1.5 py-2.5 rounded-xl text-xs font-semibold
+                          flex flex-col items-center gap-0.5
                           transition-all duration-150 active:scale-[0.95]
-                          min-h-[60px] justify-center
                           ${isThisRecipe
                             ? 'bg-primary-500 text-white shadow-sm'
                             : hasOther
@@ -174,13 +204,29 @@ export default function PlanDayPicker({ recipe, mealPlan, onSelect, onClose }: P
                           }
                         `}
                       >
+                        {/* Icon */}
                         <span className="text-base leading-none">{icon}</span>
-                        <span className="leading-none">{label}</span>
+
+                        {/* Meal label */}
+                        <span className="leading-snug">{label}</span>
+
+                        {/* Assigned recipe name — only when another recipe occupies this slot */}
+                        {assignedRecipe && (
+                          <span
+                            className="text-[10px] leading-tight opacity-70 w-full text-center"
+                            style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}
+                            title={assignedRecipe.name}
+                          >
+                            {assignedRecipe.name}
+                          </span>
+                        )}
+
+                        {/* Status badges */}
                         {isThisRecipe && (
-                          <span className="text-[10px] opacity-80 leading-none">✓ Set</span>
+                          <span className="text-[10px] opacity-80 leading-none mt-0.5">✓ Set</span>
                         )}
                         {hasOther && (
-                          <span className="text-[10px] opacity-70 leading-none">Replace</span>
+                          <span className="text-[10px] opacity-80 leading-none mt-0.5">Replace</span>
                         )}
                       </button>
                     );

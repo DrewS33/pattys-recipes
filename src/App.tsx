@@ -514,6 +514,7 @@ export default function App() {
       {planningRecipe && (
         <PlanDayPicker
           recipe={planningRecipe}
+          recipes={recipes}
           mealPlan={mealPlan}
           onSelect={handleAssignToPlanner}
           onClose={() => setPlanningRecipe(null)}
