@@ -96,12 +96,45 @@ export default function App() {
     [selectedRecipes]
   );
 
+  // O(1) recipe lookup by ID (used for planner → shopping sync)
+  const recipeMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes]);
+
+  // All recipes currently assigned anywhere in the meal plan
+  const plannerSelectedRecipes = useMemo((): SelectedRecipe[] => {
+    const seen = new Set<string>();
+    const result: SelectedRecipe[] = [];
+    for (const dayPlan of Object.values(mealPlan)) {
+      for (const meal of ['breakfast', 'lunch', 'dinner'] as const) {
+        const id = dayPlan[meal];
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          const recipe = recipeMap.get(id);
+          if (recipe) result.push({ recipe, servingMultiplier: 1 });
+        }
+      }
+    }
+    return result;
+  }, [mealPlan, recipeMap]);
+
+  // Combined shopping list: manual selections + planner recipes (deduped, manual takes priority)
+  const allShoppingRecipes = useMemo((): SelectedRecipe[] => {
+    const manualIds = new Set(selectedRecipes.map((sr) => sr.recipe.id));
+    const plannerOnly = plannerSelectedRecipes.filter((sr) => !manualIds.has(sr.recipe.id));
+    return [...selectedRecipes, ...plannerOnly];
+  }, [selectedRecipes, plannerSelectedRecipes]);
+
+  // Count of planner-only additions (for the shopping list banner)
+  const plannerOnlyCount = useMemo(
+    () => plannerSelectedRecipes.filter((sr) => !selectedIds.has(sr.recipe.id)).length,
+    [plannerSelectedRecipes, selectedIds]
+  );
+
   // ---- Shopping list count (for nav badge — excludes pantry staples) ----
   const shoppingListCount = useMemo(() => {
-    return mergeIngredients(selectedRecipes).filter(
+    return mergeIngredients(allShoppingRecipes).filter(
       (item) => !isPantryStaple(item.name, pantryItems)
     ).length;
-  }, [selectedRecipes, pantryItems]);
+  }, [allShoppingRecipes, pantryItems]);
 
   // ---- Filtering ----
 
@@ -209,12 +242,10 @@ export default function App() {
   }, [setSelectedRecipes, setCheckedItemKeys]);
 
   const handleClearChecked = useCallback(() => {
-    // Get current item keys from the merged list
-    const currentItems = mergeIngredients(selectedRecipes);
+    const currentItems = mergeIngredients(allShoppingRecipes);
     const currentKeys = new Set(currentItems.map((i) => itemKey(i.name, i.unit)));
-    // Only remove keys that are in the current list
     setCheckedItemKeys((prev) => prev.filter((k) => !currentKeys.has(k)));
-  }, [selectedRecipes, setCheckedItemKeys]);
+  }, [allShoppingRecipes, setCheckedItemKeys]);
 
   const handleViewDetail = useCallback((recipe: Recipe) => {
     setActiveRecipeDetail(recipe);
@@ -462,7 +493,8 @@ export default function App() {
         {/* ---- SHOPPING TAB ---- */}
         {activeTab === 'shopping' && (
           <ShoppingList
-            selectedRecipes={selectedRecipes}
+            selectedRecipes={allShoppingRecipes}
+            plannerRecipeCount={plannerOnlyCount}
             checkedItems={checkedSet}
             onToggleCheck={handleToggleCheck}
             onClearList={handleClearList}

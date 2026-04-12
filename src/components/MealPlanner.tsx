@@ -12,6 +12,33 @@ interface MealPlannerProps {
   onAddToShoppingList: (recipes: Recipe[]) => void;
 }
 
+const PROTEIN_EMOJI: Record<string, string> = {
+  Chicken:   '🍗',
+  Beef:      '🥩',
+  Pork:      '🥓',
+  Turkey:    '🦃',
+  Seafood:   '🦐',
+  Pasta:     '🍝',
+  Soup:      '🍲',
+  Breakfast: '🥞',
+  Other:     '🍴',
+};
+
+function RecipeThumbnail({ recipe, size }: { recipe: Recipe; size: 'sm' | 'md' }) {
+  const emoji = PROTEIN_EMOJI[recipe.proteinType] || '🍴';
+  const cls = size === 'sm'
+    ? 'w-8 h-8 rounded-md flex-shrink-0'
+    : 'w-10 h-10 rounded-lg flex-shrink-0';
+  return (
+    <div className={`${cls} overflow-hidden bg-stone-100 flex items-center justify-center`}>
+      {recipe.image
+        ? <img src={recipe.image} alt="" className="w-full h-full object-cover" />
+        : <span className={size === 'sm' ? 'text-sm' : 'text-xl'}>{emoji}</span>
+      }
+    </div>
+  );
+}
+
 const MEAL_SLOTS: Array<{ key: keyof MealPlanDay; label: string; icon: string }> = [
   { key: 'breakfast', label: 'Breakfast', icon: '☀️' },
   { key: 'lunch',     label: 'Lunch',     icon: '🌤️' },
@@ -193,14 +220,17 @@ export default function MealPlanner({
                   <div key={dk} className="min-h-[64px]">
                     {recipe ? (
                       <div className="h-full bg-white border border-primary-200 rounded-xl p-2 flex flex-col justify-between group hover:border-primary-400 transition-colors">
-                        <p
-                          className="text-xs font-semibold text-stone-700 leading-tight line-clamp-2 cursor-pointer"
+                        <div
+                          className="flex items-start gap-1.5 cursor-pointer"
                           onClick={() =>
                             setPicker({ dateKey: dk, meal: mealKey, dayLabel: DAY_NAMES_FULL[i], mealLabel: label })
                           }
                         >
-                          {recipe.name}
-                        </p>
+                          <RecipeThumbnail recipe={recipe} size="sm" />
+                          <p className="text-xs font-semibold text-stone-700 leading-tight line-clamp-2 flex-1 pt-0.5">
+                            {recipe.name}
+                          </p>
+                        </div>
                         <button
                           onClick={() => setMeal(dk, mealKey, undefined)}
                           className="text-xs text-stone-300 hover:text-red-400 self-end transition-colors opacity-0 group-hover:opacity-100"
@@ -263,7 +293,8 @@ export default function MealPlanner({
                       <span className="text-base w-6 flex-shrink-0">{icon}</span>
                       <span className="text-xs font-bold text-stone-400 uppercase tracking-wide w-16 flex-shrink-0">{label}</span>
                       {recipe ? (
-                        <div className="flex-1 flex items-center justify-between gap-2">
+                        <div className="flex-1 flex items-center gap-2">
+                          <RecipeThumbnail recipe={recipe} size="sm" />
                           <button
                             onClick={() => {
                               setPickerSearch('');
@@ -355,12 +386,15 @@ export default function MealPlanner({
                       setMeal(picker.dateKey, picker.meal, recipe.id);
                       setPicker(null);
                     }}
-                    className="w-full text-left px-4 py-3 rounded-xl border border-amber-100 bg-white hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                    className="w-full text-left px-3 py-2.5 rounded-xl border border-amber-100 bg-white hover:border-primary-300 hover:bg-primary-50 transition-colors flex items-center gap-3"
                   >
-                    <p className="font-semibold text-stone-800 text-sm">{recipe.name}</p>
-                    <p className="text-xs text-stone-400 mt-0.5">
-                      {recipe.proteinType} · {recipe.mealType} · {recipe.totalTimeMinutes}m
-                    </p>
+                    <RecipeThumbnail recipe={recipe} size="md" />
+                    <div>
+                      <p className="font-semibold text-stone-800 text-sm">{recipe.name}</p>
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        {recipe.proteinType} · {recipe.mealType} · {recipe.totalTimeMinutes}m
+                      </p>
+                    </div>
                   </button>
                 ))
               )}

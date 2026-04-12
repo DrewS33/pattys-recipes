@@ -3,6 +3,7 @@ import { SelectedRecipe, ShoppingListItem, PantryItem } from '../types';
 import { mergeIngredients, formatQuantity } from '../utils/ingredientMerger';
 import { GROCERY_SECTION_ORDER, GROCERY_SECTION_ICONS } from '../utils/grocerySections';
 import { isPantryStaple } from '../utils/pantryUtils';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import SmartExportModal from './SmartExportModal';
 
 // ============================================================
@@ -11,6 +12,7 @@ import SmartExportModal from './SmartExportModal';
 
 interface ShoppingListProps {
   selectedRecipes: SelectedRecipe[];
+  plannerRecipeCount?: number;
   checkedItems: Set<string>;
   onToggleCheck: (itemKey: string) => void;
   onClearList: () => void;
@@ -25,6 +27,7 @@ function itemKey(item: ShoppingListItem): string {
 
 export default function ShoppingList({
   selectedRecipes,
+  plannerRecipeCount = 0,
   checkedItems,
   onToggleCheck,
   onClearList,
@@ -33,6 +36,7 @@ export default function ShoppingList({
 }: ShoppingListProps) {
   const [showSmartExport, setShowSmartExport] = useState(false);
   const [showPantryHidden, setShowPantryHidden] = useState(false);
+  const [groceryMode, setGroceryMode] = useLocalStorage<boolean>('groceryMode', false);
 
   // Merge all ingredients from selected recipes
   const mergedItems = useMemo(() => mergeIngredients(selectedRecipes), [selectedRecipes]);
@@ -104,10 +108,35 @@ export default function ShoppingList({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-display text-2xl font-bold text-stone-800">🛒 Shopping List</h2>
-          <span className="text-base font-semibold text-primary-600">
-            {remainingCount} item{remainingCount !== 1 ? 's' : ''} remaining
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-base font-semibold text-primary-600">
+              {remainingCount} item{remainingCount !== 1 ? 's' : ''} remaining
+            </span>
+            {/* Grocery Mode toggle */}
+            <button
+              onClick={() => setGroceryMode((v) => !v)}
+              title={groceryMode ? 'Exit Grocery Mode' : 'Grocery Mode — larger text for in-store use'}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-semibold border transition-all ${
+                groceryMode
+                  ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                  : 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300 hover:text-emerald-600'
+              }`}
+            >
+              🛍️ {groceryMode ? 'Exit Store Mode' : 'Store Mode'}
+            </button>
+          </div>
         </div>
+
+        {/* Planner sync banner */}
+        {plannerRecipeCount > 0 && (
+          <div className="bg-violet-50 rounded-xl p-3 border border-violet-200 mb-3 flex items-center gap-2">
+            <span className="text-base">📅</span>
+            <p className="text-sm text-violet-800 flex-1">
+              <strong>{plannerRecipeCount} recipe{plannerRecipeCount !== 1 ? 's' : ''} from your planner</strong>
+              {' '}added automatically.
+            </p>
+          </div>
+        )}
 
         {/* Source recipes */}
         <div className="bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
@@ -223,8 +252,8 @@ export default function ShoppingList({
           return (
             <div key={section}>
               <div className="flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
-                <span className="text-2xl">{GROCERY_SECTION_ICONS[section]}</span>
-                <h3 className="font-display text-base font-bold text-primary-800">{section}</h3>
+                <span className={groceryMode ? 'text-3xl' : 'text-2xl'}>{GROCERY_SECTION_ICONS[section]}</span>
+                <h3 className={`font-display font-bold text-primary-800 ${groceryMode ? 'text-lg' : 'text-base'}`}>{section}</h3>
                 <div className="flex-1 flex items-center mx-1">
                   <div className="flex-1 border-b border-primary-200" />
                   <span className="text-primary-300 text-xs px-1.5 select-none">✦</span>
@@ -233,24 +262,28 @@ export default function ShoppingList({
                 <span className="text-xs text-stone-400 italic">{items.length} item{items.length !== 1 ? 's' : ''}</span>
               </div>
 
-              <ul className="space-y-2">
+              <ul className={groceryMode ? 'space-y-3' : 'space-y-2'}>
                 {items.map((item) => {
                   const key = itemKey(item);
                   return (
                     <li
                       key={key}
-                      className="flex items-center gap-3 p-4 rounded-xl border bg-white border-gray-200 hover:border-primary-200 hover:bg-primary-50 transition-all cursor-pointer active:scale-[0.99] min-h-[64px]"
+                      className={`flex items-center bg-white border border-gray-200 rounded-xl cursor-pointer active:scale-[0.99] transition-all
+                        ${groceryMode
+                          ? 'gap-4 p-5 min-h-[76px]'
+                          : 'gap-3 p-4 min-h-[64px] hover:border-primary-200 hover:bg-primary-50'}`}
                       onClick={() => onToggleCheck(key)}
                     >
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center transition-all" />
+                      <div className={`flex-shrink-0 border-2 border-gray-300 flex items-center justify-center transition-all
+                        ${groceryMode ? 'w-10 h-10 rounded-lg' : 'w-8 h-8 rounded-full'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="text-base font-bold text-gray-800">
+                          <span className={`font-bold text-gray-800 ${groceryMode ? 'text-xl' : 'text-base'}`}>
                             {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
                           </span>
-                          <span className="text-base text-gray-700">{item.name}</span>
+                          <span className={`text-gray-700 ${groceryMode ? 'text-xl' : 'text-base'}`}>{item.name}</span>
                         </div>
-                        {item.sources.length > 0 && (
+                        {!groceryMode && item.sources.length > 0 && (
                           <p className="text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
                         )}
                       </div>
@@ -272,26 +305,28 @@ export default function ShoppingList({
             <div className="flex-1 border-b border-stone-200" />
             <span className="text-xs text-stone-400 italic">{checkedCount} item{checkedCount !== 1 ? 's' : ''}</span>
           </div>
-          <ul className="space-y-2">
+          <ul className={groceryMode ? 'space-y-3' : 'space-y-2'}>
             {allItems.filter((item) => checkedItems.has(itemKey(item))).map((item) => {
               const key = itemKey(item);
               return (
                 <li
                   key={key}
-                  className="flex items-center gap-3 p-4 rounded-xl border bg-stone-50 border-stone-100 opacity-50 cursor-pointer hover:opacity-70 transition-all min-h-[64px]"
+                  className={`flex items-center rounded-xl border bg-stone-50 border-stone-100 opacity-50 cursor-pointer hover:opacity-70 transition-all
+                    ${groceryMode ? 'gap-4 p-5 min-h-[76px]' : 'gap-3 p-4 min-h-[64px]'}`}
                   onClick={() => onToggleCheck(key)}
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-400 border-2 border-primary-400 flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">✓</span>
+                  <div className={`flex-shrink-0 bg-primary-400 border-2 border-primary-400 flex items-center justify-center
+                    ${groceryMode ? 'w-10 h-10 rounded-lg' : 'w-8 h-8 rounded-full'}`}>
+                    <span className={`font-bold text-white ${groceryMode ? 'text-base' : 'text-xs'}`}>✓</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-base font-bold line-through text-stone-400">
+                      <span className={`font-bold line-through text-stone-400 ${groceryMode ? 'text-xl' : 'text-base'}`}>
                         {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
                       </span>
-                      <span className="text-base line-through text-stone-400">{item.name}</span>
+                      <span className={`line-through text-stone-400 ${groceryMode ? 'text-xl' : 'text-base'}`}>{item.name}</span>
                     </div>
-                    {item.sources.length > 0 && (
+                    {!groceryMode && item.sources.length > 0 && (
                       <p className="text-xs text-stone-300 mt-0.5">{item.sources.join(', ')}</p>
                     )}
                   </div>
