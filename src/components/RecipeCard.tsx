@@ -186,42 +186,57 @@ export default function RecipeCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-0.5">
+        <div className="flex items-center gap-2 pt-1">
+
+          {/* View Recipe — ghost on desktop, filled-subtle on mobile */}
           <button
             onClick={() => onViewDetail(recipe)}
-            className="flex-1 py-3 sm:py-2.5 px-3 bg-stone-50 hover:bg-stone-100 text-stone-500
-                       hover:text-stone-700 rounded-xl text-sm font-medium
-                       transition-all duration-150 active:scale-[0.97]"
+            className="
+              flex-1 py-2.5 px-3 rounded-xl text-sm font-medium
+              transition-all duration-150 active:scale-[0.97]
+              bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700
+              sm:bg-transparent sm:border sm:border-stone-200
+              sm:text-stone-400 sm:hover:bg-stone-50 sm:hover:border-stone-300 sm:hover:text-stone-600
+            "
           >
-            View Recipe
+            View
           </button>
+
+          {/* Add to List — primary CTA */}
           <button
             onClick={() => onSelect(recipe)}
             className={`
-              flex-1 py-3 sm:py-2.5 px-3 font-semibold rounded-xl text-sm
+              flex-[2] py-2.5 px-3 font-semibold rounded-xl text-sm
               transition-all duration-150 active:scale-[0.97]
               ${isSelected
-                ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500'
-                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow-md'
+                ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500 border border-red-100'
+                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow'
               }
             `}
           >
             {isSelected ? '✕ Remove' : '+ Add to List'}
           </button>
+
+          {/* Plan for Day — compact icon utility */}
           {onPlanForDay && (
             <button
               onClick={(e) => { e.stopPropagation(); onPlanForDay(recipe); }}
               aria-label="Plan for Day"
               title="Plan for Day"
-              className="flex-shrink-0 w-11 py-3 sm:py-2.5 bg-stone-50 hover:bg-amber-50
-                         border border-stone-100 hover:border-amber-300
-                         text-stone-400 hover:text-amber-600
-                         rounded-xl text-base flex items-center justify-center
-                         transition-all duration-150 active:scale-[0.97]"
+              className="
+                flex-shrink-0 w-9 h-9 rounded-xl text-base
+                flex items-center justify-center
+                transition-all duration-150 active:scale-[0.97]
+                bg-stone-100 text-stone-400 hover:bg-amber-50
+                hover:border-amber-300 hover:text-amber-600
+                sm:bg-transparent sm:border sm:border-stone-200
+                sm:text-stone-400 sm:hover:bg-amber-50 sm:hover:border-amber-300 sm:hover:text-amber-600
+              "
             >
               📅
             </button>
           )}
+
         </div>
 
       </div>
