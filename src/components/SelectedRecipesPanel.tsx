@@ -83,7 +83,7 @@ export default function SelectedRecipesPanel({
               Start building your grocery list
             </p>
             <p className="text-stone-400 text-xs leading-relaxed">
-              💛 Tap <strong className="font-semibold text-stone-500">Add to Shopping List</strong> on<br />
+              Tap <strong className="font-semibold text-stone-500">Add to Shopping List</strong> on<br />
               any recipe to get started.
             </p>
           </div>
