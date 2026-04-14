@@ -144,9 +144,13 @@ export interface StoreConfig {
 // Maps each GrocerySection to a store ID
 export type CategoryStoreMap = Partial<Record<GrocerySection, string>>;
 
+// normalizedIngredientName → store ID (overrides category default)
+export type IngredientStoreOverrides = Record<string, string>;
+
 export interface StorePreferences {
   stores: StoreConfig[];
   categoryDefaults: CategoryStoreMap;
+  ingredientOverrides?: IngredientStoreOverrides; // optional for backwards compat with stored data
 }
 
 // Shopping list grouping mode

@@ -242,6 +242,70 @@ export default function StorePreferencesModal({ prefs, onChange, onClose }: Prop
               </div>
             )}
           </div>
+
+          {/* ---- Section 3: Saved Ingredient Preferences ---- */}
+          {(() => {
+            const overrides = prefs.ingredientOverrides ?? {};
+            const overrideEntries = Object.entries(overrides);
+            if (overrideEntries.length === 0) return null;
+
+            return (
+              <>
+                <div className="border-t border-stone-100" />
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                      Saved Ingredient Preferences
+                    </h3>
+                    <button
+                      onClick={() => onChange({ ...prefs, ingredientOverrides: {} })}
+                      className="text-xs text-red-400 hover:text-red-600 font-medium"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <p className="text-xs text-stone-400 mb-3">
+                    These take priority over category defaults. Change or clear from the shopping list.
+                  </p>
+                  <div className="space-y-1.5">
+                    {overrideEntries.map(([normalizedName, storeId]) => {
+                      const store = prefs.stores.find((s) => s.id === storeId);
+                      return (
+                        <div
+                          key={normalizedName}
+                          className="flex items-center gap-2 bg-stone-50 rounded-lg px-3 py-2"
+                        >
+                          <span className="flex-1 text-sm text-stone-700 font-medium truncate">
+                            {normalizedName}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                            {store && (
+                              <span
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: store.color ?? '#9CA3AF' }}
+                              />
+                            )}
+                            {store?.name ?? <span className="italic text-stone-400">deleted store</span>}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const updated = { ...(prefs.ingredientOverrides ?? {}) };
+                              delete updated[normalizedName];
+                              onChange({ ...prefs, ingredientOverrides: updated });
+                            }}
+                            className="w-7 h-7 flex items-center justify-center text-stone-300 hover:text-red-400 rounded hover:bg-red-50 transition-colors text-sm flex-shrink-0"
+                            title="Remove this override"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Footer */}

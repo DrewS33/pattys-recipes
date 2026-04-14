@@ -3,7 +3,11 @@ import { SelectedRecipe, ShoppingListItem, PantryItem, StorePreferences, Shoppin
 import { mergeIngredients, formatQuantity } from '../utils/ingredientMerger';
 import { GROCERY_SECTION_ORDER, GROCERY_SECTION_ICONS } from '../utils/grocerySections';
 import { isPantryStaple } from '../utils/pantryUtils';
-import { groupIngredientsByStore } from '../utils/storeUtils';
+import {
+  groupIngredientsByStore,
+  getStoreForIngredient,
+  normalizeIngredientForStoreMatch,
+} from '../utils/storeUtils';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import SmartExportModal from './SmartExportModal';
 
@@ -22,6 +26,7 @@ interface ShoppingListProps {
   pantryItems: PantryItem[];
   storePreferences: StorePreferences;
   onOpenStoreSettings: () => void;
+  onSetIngredientStore: (normalizedName: string, storeId: string) => void;
 }
 
 // Build a stable key for a shopping list item
@@ -39,6 +44,7 @@ export default function ShoppingList({
   pantryItems,
   storePreferences,
   onOpenStoreSettings,
+  onSetIngredientStore,
 }: ShoppingListProps) {
   const [showSmartExport, setShowSmartExport] = useState(false);
   const [showPantryHidden, setShowPantryHidden] = useState(false);
@@ -102,9 +108,16 @@ export default function ShoppingList({
     });
   };
 
+  // Whether to show the per-item store selector
+  const showStoreSelector = storePreferences.stores.length > 0 && !groceryMode;
+
   // Shared item row renderer (used in both section and store views)
   const renderItemRow = (item: ShoppingListItem) => {
     const key = itemKey(item);
+    const effectiveStore = getStoreForIngredient(item, storePreferences);
+    const normalizedName = normalizeIngredientForStoreMatch(item.name);
+    const hasOverride = !!(storePreferences.ingredientOverrides ?? {})[normalizedName];
+
     return (
       <li
         key={key}
@@ -131,6 +144,37 @@ export default function ShoppingList({
             <p className="text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
           )}
         </div>
+
+        {/* Per-item store selector — stop propagation so it doesn't toggle the checkbox */}
+        {showStoreSelector && (
+          <div
+            className="flex-shrink-0 flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Color dot for current effective store */}
+            {effectiveStore && (
+              <span
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: effectiveStore.color ?? '#9CA3AF' }}
+              />
+            )}
+            <select
+              value={effectiveStore?.id ?? ''}
+              onChange={(e) => onSetIngredientStore(normalizedName, e.target.value)}
+              title={hasOverride ? `Saved: ${effectiveStore?.name ?? 'None'}` : `Category default: ${effectiveStore?.name ?? 'None'}`}
+              className={`text-xs rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300 max-w-[110px] transition-colors ${
+                hasOverride
+                  ? 'border border-primary-300 text-primary-700 font-semibold'
+                  : 'border border-stone-200 text-stone-500'
+              }`}
+            >
+              <option value="">— None —</option>
+              {storePreferences.stores.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </li>
     );
   };

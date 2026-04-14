@@ -65,11 +65,17 @@ export default function App() {
     DEFAULT_PANTRY_ITEMS
   );
 
-  // Store preferences — stores list + category → store assignments
+  // Store preferences — stores list + category → store assignments + ingredient overrides
   const [storePreferences, setStorePreferences] = useLocalStorage<StorePreferences>(
     'storePreferences',
     DEFAULT_STORE_PREFERENCES
   );
+
+  // Safely access ingredientOverrides even for users who stored prefs before this field existed
+  const safeStorePrefs: StorePreferences = {
+    ...storePreferences,
+    ingredientOverrides: storePreferences.ingredientOverrides ?? {},
+  };
 
   // Merge any new seed recipes into existing localStorage data (handles returning users)
   useEffect(() => {
@@ -249,6 +255,19 @@ export default function App() {
     setSelectedRecipes([]);
     setCheckedItemKeys([]);
   }, [setSelectedRecipes, setCheckedItemKeys]);
+
+  // Save an ingredient-specific store override (or clear it with storeId = "")
+  const handleSetIngredientStore = useCallback((normalizedName: string, storeId: string) => {
+    setStorePreferences((prev) => {
+      const overrides = { ...(prev.ingredientOverrides ?? {}) };
+      if (storeId === '') {
+        delete overrides[normalizedName];
+      } else {
+        overrides[normalizedName] = storeId;
+      }
+      return { ...prev, ingredientOverrides: overrides };
+    });
+  }, [setStorePreferences]);
 
   const handleClearChecked = useCallback(() => {
     const currentItems = mergeIngredients(allShoppingRecipes);
@@ -509,8 +528,9 @@ export default function App() {
             onClearList={handleClearList}
             onClearChecked={handleClearChecked}
             pantryItems={pantryItems}
-            storePreferences={storePreferences}
+            storePreferences={safeStorePrefs}
             onOpenStoreSettings={() => setShowStoreSettings(true)}
+            onSetIngredientStore={handleSetIngredientStore}
           />
         )}
 
@@ -567,7 +587,7 @@ export default function App() {
       {/* Store Preferences Modal */}
       {showStoreSettings && (
         <StorePreferencesModal
-          prefs={storePreferences}
+          prefs={safeStorePrefs}
           onChange={setStorePreferences}
           onClose={() => setShowStoreSettings(false)}
         />

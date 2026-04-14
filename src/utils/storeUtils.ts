@@ -21,7 +21,36 @@ export const PRESET_STORE_COLORS = [
 export const DEFAULT_STORE_PREFERENCES: StorePreferences = {
   stores: [],
   categoryDefaults: {},
+  ingredientOverrides: {},
 };
+
+// ============================================================
+// normalizeIngredientForStoreMatch
+//
+// Produces a stable lookup key from an ingredient name.
+// Called when both saving and reading ingredient overrides so the
+// key is always consistent regardless of capitalisation or minor
+// wording differences.
+//
+// Input examples (item.name is already stripped of qty/unit):
+//   "Chicken Breast"  → "chicken breast"
+//   "olive oil"       → "olive oil"
+//   "diced onion"     → "onion"   (prep word stripped)
+// ============================================================
+export function normalizeIngredientForStoreMatch(name: string): string {
+  return name
+    .toLowerCase()
+    // remove any stray numbers (shouldn't be in item.name but just in case)
+    .replace(/\d+(\.\d+)?/g, '')
+    // strip common prep/descriptor words
+    .replace(
+      /\b(diced|minced|chopped|sliced|grated|shredded|crushed|ground|whole|fresh|dried|frozen|canned|cooked|raw|large|medium|small|extra)\b/g,
+      ''
+    )
+    // collapse whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // ============================================================
 // getDefaultStoreForCategory
@@ -37,16 +66,38 @@ export function getDefaultStoreForCategory(
 }
 
 // ============================================================
+// getIngredientStoreOverride
+// Checks if a specific ingredient has a saved store override.
+// Returns the StoreConfig if found (and the store still exists),
+// or null if no override or the store was deleted.
+// ============================================================
+export function getIngredientStoreOverride(
+  item: ShoppingListItem,
+  prefs: StorePreferences
+): StoreConfig | null {
+  const overrides = prefs.ingredientOverrides ?? {};
+  const key = normalizeIngredientForStoreMatch(item.name);
+  const storeId = overrides[key];
+  if (!storeId) return null;
+  return prefs.stores.find((s) => s.id === storeId) ?? null;
+}
+
+// ============================================================
 // getStoreForIngredient
-// Returns the store for a shopping list item.
-// Phase 2 note: add ingredient-level overrides here before
-// falling back to the category default.
+//
+// Priority order:
+//   1. Ingredient-specific override (saved by user for this item)
+//   2. Category/section default store
+//   3. null → Unassigned
 // ============================================================
 export function getStoreForIngredient(
   item: ShoppingListItem,
   prefs: StorePreferences
 ): StoreConfig | null {
-  return getDefaultStoreForCategory(item.grocerySection, prefs);
+  return (
+    getIngredientStoreOverride(item, prefs) ??
+    getDefaultStoreForCategory(item.grocerySection, prefs)
+  );
 }
 
 // ============================================================
@@ -60,8 +111,8 @@ export interface StoreGroup {
 
 // ============================================================
 // groupIngredientsByStore
-// Splits shopping list items into groups ordered by prefs.stores.
-// Items with no store assigned go into an "Unassigned" group at the end.
+// Splits shopping list items into ordered store groups.
+// Unassigned items go at the end.
 // ============================================================
 export function groupIngredientsByStore(
   items: ShoppingListItem[],
@@ -82,7 +133,7 @@ export function groupIngredientsByStore(
     }
   }
 
-  // Order groups to match the order stores appear in prefs.stores
+  // Maintain the store order from prefs.stores
   const groups: StoreGroup[] = [];
   for (const store of prefs.stores) {
     const group = storeMap.get(store.id);
