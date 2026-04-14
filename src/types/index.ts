@@ -132,6 +132,27 @@ export interface PantryItem {
 }
 
 // ============================================================
+// STORE PREFERENCES - for grouping shopping list by store
+// ============================================================
+
+export interface StoreConfig {
+  id: string;
+  name: string;
+  color?: string; // hex color, e.g. "#3B82F6"
+}
+
+// Maps each GrocerySection to a store ID
+export type CategoryStoreMap = Partial<Record<GrocerySection, string>>;
+
+export interface StorePreferences {
+  stores: StoreConfig[];
+  categoryDefaults: CategoryStoreMap;
+}
+
+// Shopping list grouping mode
+export type ShoppingGroupingMode = 'section' | 'store';
+
+// ============================================================
 // FILTERS - what the user has selected in the filter bar
 // ============================================================
 export interface Filters {

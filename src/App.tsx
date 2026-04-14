@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { MealPlanDay } from './types';
-import { Recipe, SelectedRecipe, Filters, MealPlan, PantryItem } from './types';
+import { Recipe, SelectedRecipe, Filters, MealPlan, PantryItem, StorePreferences } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { sampleRecipes } from './data/recipes';
 import { DEFAULT_PANTRY_ITEMS } from './data/pantryData';
 import { isPantryStaple } from './utils/pantryUtils';
+import { DEFAULT_STORE_PREFERENCES } from './utils/storeUtils';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
 import RecipeCard from './components/RecipeCard';
@@ -15,6 +16,7 @@ import AddEditRecipe from './components/AddEditRecipe';
 import MealPlanner from './components/MealPlanner';
 import Pantry from './components/Pantry';
 import PlanDayPicker from './components/PlanDayPicker';
+import StorePreferencesModal from './components/StorePreferencesModal';
 import { mergeIngredients } from './utils/ingredientMerger';
 
 // ============================================================
@@ -63,6 +65,12 @@ export default function App() {
     DEFAULT_PANTRY_ITEMS
   );
 
+  // Store preferences — stores list + category → store assignments
+  const [storePreferences, setStorePreferences] = useLocalStorage<StorePreferences>(
+    'storePreferences',
+    DEFAULT_STORE_PREFERENCES
+  );
+
   // Merge any new seed recipes into existing localStorage data (handles returning users)
   useEffect(() => {
     const existingIds = new Set(recipes.map((r) => r.id));
@@ -76,6 +84,7 @@ export default function App() {
   // ---- Local (non-persisted) UI state ----
 
   const [activeTab, setActiveTab] = useState<'recipes' | 'shopping' | 'pantry' | 'planner'>('recipes');
+  const [showStoreSettings, setShowStoreSettings] = useState(false);
   const importFileRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [activeRecipeDetail, setActiveRecipeDetail] = useState<Recipe | null>(null);
@@ -500,6 +509,8 @@ export default function App() {
             onClearList={handleClearList}
             onClearChecked={handleClearChecked}
             pantryItems={pantryItems}
+            storePreferences={storePreferences}
+            onOpenStoreSettings={() => setShowStoreSettings(true)}
           />
         )}
 
@@ -550,6 +561,15 @@ export default function App() {
           mealPlan={mealPlan}
           onSelect={handleAssignToPlanner}
           onClose={() => setPlanningRecipe(null)}
+        />
+      )}
+
+      {/* Store Preferences Modal */}
+      {showStoreSettings && (
+        <StorePreferencesModal
+          prefs={storePreferences}
+          onChange={setStorePreferences}
+          onClose={() => setShowStoreSettings(false)}
         />
       )}
 
