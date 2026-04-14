@@ -35,6 +35,107 @@ const GROCERY_SECTION_OPTIONS: GrocerySection[] = [
   'Beverages', 'Miscellaneous',
 ];
 
+// ============================================================
+// CHATGPT IMPORT PROMPTS
+// ============================================================
+const CHATGPT_PROMPT_URL_TEXT = `MASTER RECIPE FORMAT PROMPT
+Format this recipe for me using EXACTLY this structure.
+Follow ALL rules strictly so it can be parsed by an app.
+________________________________________
+GENERAL RULES (VERY IMPORTANT)
+• DO NOT guess or invent information
+• ONLY use information explicitly stated in the recipe
+• If something is unclear or missing, LEAVE IT OUT
+• Keep units EXACTLY as written in the recipe (no weird conversions like decimals)
+• Keep instructions beginner-friendly with clear detail
+• Include temperatures, cook times, and pan sizes WHEN AVAILABLE
+• Do NOT include links, citations, or sources
+• Do NOT add extra commentary
+________________________________________
+METADATA FORMAT (MUST BE FIRST)
+Use EXACTLY this format:
+Prep time: X minutes
+Cook time: X minutes
+Serves: X
+________________________________________
+INGREDIENT RULES (STRICT)
+• Header must be: Ingredients
+• Each ingredient MUST be on its own line
+• Format MUST be:
+[number] [unit] [ingredient name], [prep note]
+• Quantity ALWAYS comes first
+• NEVER write "2 cups of flour" → write "2 cups flour"
+• NEVER write "flour - 2 cups"
+• Use ONLY these units:
+tbsp, tsp, cup, lb, oz, g, kg, ml, clove, can, package, pinch, dash, bunch, slice, piece, sprig
+• If no unit (like eggs), write:
+2 eggs
+• Prep notes go after a comma:
+2 cloves garlic, minced
+• Or in parentheses:
+1 lb chicken breast (boneless, skinless)
+• Use fractions ONLY:
+1/2, 1 1/2, 2/3 (NO decimals)
+• DO NOT convert units unless absolutely necessary
+• DO NOT group ingredients or add categories
+________________________________________
+INSTRUCTIONS RULES (STRICT)
+• Header must be: Instructions
+• Numbered steps ONLY (no titles, no sections)
+• Write in clear, beginner-friendly language
+• Include:
+o Pan sizes (10–12 inch skillet, 9x13 dish, etc.)
+o Temperatures (oven or internal when relevant)
+o Approximate timing for each step
+• Avoid vague phrases like "cook until done"
+• Be specific and actionable
+________________________________________
+NOTES RULES
+• Header must be: Notes
+• Only include helpful tips FROM the recipe or clearly implied
+• Keep concise
+________________________________________
+FINAL STRUCTURE (EXACT ORDER)
+Recipe Name
+Short description (1 sentence)
+Prep time: X minutes
+Cook time: X minutes
+Serves: X
+Ingredients
+[formatted list]
+Instructions
+[numbered steps]
+Notes
+[short notes]
+________________________________________
+NOW FORMAT THIS RECIPE:
+[PASTE LINK OR TEXT HERE]`;
+
+const CHATGPT_PROMPT_IMAGE = CHATGPT_PROMPT_URL_TEXT.replace(
+  'NOW FORMAT THIS RECIPE:\n[PASTE LINK OR TEXT HERE]',
+  'NOW FORMAT THE RECIPE SHOWN IN THIS IMAGE:\n[PASTE IMAGE HERE]'
+);
+
+// Clipboard helper with fallback for older/mobile browsers
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+    document.body.appendChild(el);
+    el.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(el);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 // A blank ingredient template
 const blankIngredient = (): Ingredient => ({
   name: '',
@@ -105,6 +206,7 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
   const [showPastePanel, setShowPastePanel] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [parseNotice, setParseNotice] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState<'url-text' | 'image' | null>(null);
 
   // Initialize form when modal opens
   useEffect(() => {
@@ -124,6 +226,7 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
       setShowPastePanel(false);
       setPasteText('');
       setParseNotice(false);
+      setCopiedPrompt(null);
     }
   }, [isOpen, recipe]);
 
@@ -154,6 +257,16 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
     } catch (e: unknown) {
       setImportStatus('error');
       setImportError(e instanceof Error ? e.message : 'Failed to import recipe');
+    }
+  };
+
+  // ---- ChatGPT prompt copy ----
+  const handleCopyPrompt = async (type: 'url-text' | 'image') => {
+    const text = type === 'image' ? CHATGPT_PROMPT_IMAGE : CHATGPT_PROMPT_URL_TEXT;
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedPrompt(type);
+      setTimeout(() => setCopiedPrompt(null), 2000);
     }
   };
 
@@ -356,6 +469,38 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
               <p className="text-red-600 text-xs mt-2 leading-relaxed whitespace-pre-line">{importError}</p>
             )}
             <p className="text-stone-400 text-xs mt-2">Fills in the form automatically — you can review and edit before saving.</p>
+          </section>
+
+          {/* ChatGPT Import Helper */}
+          <section className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <h3 className="text-sm font-bold text-stone-600 uppercase tracking-widest mb-2">🤖 Import with ChatGPT</h3>
+            <p className="text-stone-500 text-xs leading-relaxed mb-3">
+              Copy a prompt, paste it into ChatGPT with your recipe URL, text, or image — then paste ChatGPT's reply into <span className="font-semibold">Paste Recipe Text</span> below.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={() => handleCopyPrompt('url-text')}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white border border-amber-200 text-stone-700 font-semibold rounded-xl text-xs hover:bg-amber-100 hover:border-amber-300 transition-colors active:scale-[0.98]"
+              >
+                {copiedPrompt === 'url-text' ? (
+                  <><span className="text-green-600">✓</span><span className="text-green-700">Prompt copied!</span></>
+                ) : (
+                  <><span>📋</span><span>Copy Prompt for URL or Text</span></>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCopyPrompt('image')}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white border border-amber-200 text-stone-700 font-semibold rounded-xl text-xs hover:bg-amber-100 hover:border-amber-300 transition-colors active:scale-[0.98]"
+              >
+                {copiedPrompt === 'image' ? (
+                  <><span className="text-green-600">✓</span><span className="text-green-700">Prompt copied!</span></>
+                ) : (
+                  <><span>🖼️</span><span>Copy Prompt for Image</span></>
+                )}
+              </button>
+            </div>
           </section>
 
           {/* Paste Recipe Text */}
