@@ -10,6 +10,7 @@ import { usePantry } from './hooks/usePantry';
 import { useStorePreferences } from './hooks/useStorePreferences';
 import { checkMigrationNeeded, performMigration, declineMigration, LocalStorageSnapshot } from './lib/migration';
 import AuthPage from './components/AuthPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import MigrationPrompt from './components/MigrationPrompt';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
@@ -45,7 +46,7 @@ function itemKey(name: string, unit: string): string {
 }
 
 export default function App() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, isRecovery, signOut } = useAuth();
 
   // ---- Migration gate state ----
   const [migrationState, setMigrationState] = useState<'checking' | 'prompt' | 'done'>('checking');
@@ -416,6 +417,9 @@ export default function App() {
 
   // Not signed in
   if (!user) return <AuthPage />;
+
+  // Opened via a password-reset email link — show the set-new-password screen
+  if (isRecovery) return <ResetPasswordPage />;
 
   // Migration check in progress
   if (migrationState === 'checking') {

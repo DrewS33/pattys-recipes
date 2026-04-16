@@ -12,10 +12,13 @@ interface AuthContextValue {
   session: Session | null;
   /** True while the initial session check is in flight. */
   loading: boolean;
+  /** True when the app was opened via a password-recovery email link. */
+  isRecovery: boolean;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -24,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
     // Load the persisted session on mount
@@ -33,10 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Keep state in sync when the user signs in/out on any tab
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Keep state in sync when the user signs in/out on any tab.
+    // PASSWORD_RECOVERY fires when the app is opened via a reset email link —
+    // treat it as recovery mode rather than a normal completed login.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsRecovery(true);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (event === 'SIGNED_OUT') setIsRecovery(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -63,8 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null };
   };
 
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) setIsRecovery(false);
+    return { error: error?.message ?? null };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, loading, isRecovery, signUp, signIn, signOut, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );
