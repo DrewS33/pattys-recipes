@@ -1,11 +1,16 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { MealPlanDay } from './types';
-import { Recipe, SelectedRecipe, Filters, MealPlan, PantryItem, StorePreferences } from './types';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { sampleRecipes } from './data/recipes';
-import { DEFAULT_PANTRY_ITEMS } from './data/pantryData';
-import { isPantryStaple } from './utils/pantryUtils';
-import { DEFAULT_STORE_PREFERENCES } from './utils/storeUtils';
+import { Recipe, SelectedRecipe, Filters, MealPlan } from './types';
+import { useAuth } from './contexts/AuthContext';
+import { useRecipes } from './hooks/useRecipes';
+import { useShoppingSelections } from './hooks/useShoppingSelections';
+import { useShoppingState } from './hooks/useShoppingState';
+import { usePlanner } from './hooks/usePlanner';
+import { usePantry } from './hooks/usePantry';
+import { useStorePreferences } from './hooks/useStorePreferences';
+import { checkMigrationNeeded, performMigration, declineMigration, LocalStorageSnapshot } from './lib/migration';
+import AuthPage from './components/AuthPage';
+import MigrationPrompt from './components/MigrationPrompt';
 import Navigation from './components/Navigation';
 import FilterBar from './components/FilterBar';
 import RecipeCard from './components/RecipeCard';
@@ -18,6 +23,7 @@ import Pantry from './components/Pantry';
 import PlanDayPicker from './components/PlanDayPicker';
 import StorePreferencesModal from './components/StorePreferencesModal';
 import { mergeIngredients } from './utils/ingredientMerger';
+import { isPantryStaple } from './utils/pantryUtils';
 
 // ============================================================
 // App: root component — orchestrates all state and routing
@@ -39,53 +45,64 @@ function itemKey(name: string, unit: string): string {
 }
 
 export default function App() {
-  // ---- Persisted state (localStorage) ----
+  const { user, loading: authLoading, signOut } = useAuth();
 
-  // Recipes list — seeded with Patty's recipes on first visit
-  const [recipes, setRecipes] = useLocalStorage<Recipe[]>('recipes-v2', sampleRecipes);
+  // ---- Migration gate state ----
+  const [migrationState, setMigrationState] = useState<'checking' | 'prompt' | 'done'>('checking');
+  const [migrationSnapshot, setMigrationSnapshot] = useState<LocalStorageSnapshot | null>(null);
 
-  // Selected recipes for shopping list
-  const [selectedRecipes, setSelectedRecipes] = useLocalStorage<SelectedRecipe[]>(
-    'selectedRecipes',
-    []
-  );
+  // Run migration check once after the user is confirmed signed in
+  useEffect(() => {
+    if (!user) return;
 
-  // Favorite recipe IDs stored as array (Set not JSON-serializable)
-  const [favoriteIds, setFavoriteIds] = useLocalStorage<string[]>('favoriteIds', []);
+    checkMigrationNeeded(user.id).then((snapshot) => {
+      if (snapshot) {
+        setMigrationSnapshot(snapshot);
+        setMigrationState('prompt');
+      } else {
+        setMigrationState('done');
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  // Checked shopping list item keys (stored as array)
-  const [checkedItemKeys, setCheckedItemKeys] = useLocalStorage<string[]>('checkedItems', []);
+  // ---- Cloud data hooks ----
+  const {
+    recipes,
+    loading: recipesLoading,
+    saveRecipe,
+    deleteRecipe,
+    toggleFavorite,
+    rateRecipe,
+    reloadRecipes,
+  } = useRecipes();
 
-  // Meal plan — date key → { breakfast, lunch, dinner } recipe IDs
-  const [mealPlan, setMealPlan] = useLocalStorage<MealPlan>('mealPlan', {});
+  const {
+    selectedRecipes,
+    addToList,
+    removeFromList,
+    updateMultiplier,
+    clearSelections,
+  } = useShoppingSelections(recipes);
 
-  // Pantry staples — which items the user already has at home
-  const [pantryItems, setPantryItems] = useLocalStorage<PantryItem[]>(
-    'pantryItems',
-    DEFAULT_PANTRY_ITEMS
-  );
+  const {
+    checkedItemKeys,
+    toggleCheck,
+    clearChecked,
+    clearAllChecked,
+  } = useShoppingState();
 
-  // Store preferences — stores list + category → store assignments + ingredient overrides
-  const [storePreferences, setStorePreferences] = useLocalStorage<StorePreferences>(
-    'storePreferences',
-    DEFAULT_STORE_PREFERENCES
-  );
+  const { mealPlan, setMealPlan } = usePlanner();
 
-  // Safely access ingredientOverrides even for users who stored prefs before this field existed
-  const safeStorePrefs: StorePreferences = {
+  const { pantryItems, updatePantry } = usePantry();
+
+  const { storePreferences, updateStorePreferences, setIngredientStore } = useStorePreferences();
+
+  // Defensive: always have ingredientOverrides defined
+  const safeStorePrefs = {
     ...storePreferences,
     ingredientOverrides: storePreferences.ingredientOverrides ?? {},
   };
-
-  // Merge any new seed recipes into existing localStorage data (handles returning users)
-  useEffect(() => {
-    const existingIds = new Set(recipes.map((r) => r.id));
-    const toAdd = sampleRecipes.filter((r) => !existingIds.has(r.id));
-    if (toAdd.length > 0) {
-      setRecipes((prev) => [...prev, ...toAdd]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // ---- Local (non-persisted) UI state ----
 
@@ -103,9 +120,24 @@ export default function App() {
   const [planToast, setPlanToast] = useState<string | null>(null);
   const planToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Derived sets for O(1) lookups
+  // Keep the detail modal in sync when a recipe is edited/rated/favorited
+  useEffect(() => {
+    if (activeRecipeDetail) {
+      const updated = recipes.find((r) => r.id === activeRecipeDetail.id);
+      if (updated) setActiveRecipeDetail(updated);
+    }
+  // Only run when the recipes array changes, not on detail open/close
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipes]);
+
+  // ---- Derived state ----
+
+  // Favorites derived from the recipe's .favorite field (source of truth is now Supabase)
+  const favoriteIds = useMemo(() => recipes.filter((r) => r.favorite).map((r) => r.id), [recipes]);
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
   const checkedSet = useMemo(() => new Set(checkedItemKeys), [checkedItemKeys]);
+
   const selectedIds = useMemo(
     () => new Set(selectedRecipes.map((sr) => sr.recipe.id)),
     [selectedRecipes]
@@ -144,7 +176,7 @@ export default function App() {
     [plannerSelectedRecipes, selectedIds]
   );
 
-  // ---- Shopping list count (for nav badge — excludes pantry staples) ----
+  // Shopping list count (for nav badge — excludes pantry staples)
   const shoppingListCount = useMemo(() => {
     return mergeIngredients(allShoppingRecipes).filter(
       (item) => !isPantryStaple(item.name, pantryItems)
@@ -156,7 +188,6 @@ export default function App() {
   const getFilteredRecipes = useCallback(
     (sourceRecipes: Recipe[]) => {
       return sourceRecipes.filter((r) => {
-        // Search: match name, description, tags, ingredients
         if (filters.search) {
           const q = filters.search.toLowerCase();
           const haystack =
@@ -183,97 +214,59 @@ export default function App() {
     [filters, favoriteSet]
   );
 
-  // Filtered recipe list for the Recipes tab
   const filteredRecipes = useMemo(() => getFilteredRecipes(recipes), [getFilteredRecipes, recipes]);
 
   // ---- Handlers ----
 
   const handleAddToList = useCallback((recipe: Recipe, multiplier: number) => {
-    setSelectedRecipes((prev) => {
-      const existing = prev.find((sr) => sr.recipe.id === recipe.id);
-      if (existing) {
-        // Update multiplier if already selected
-        return prev.map((sr) =>
-          sr.recipe.id === recipe.id ? { ...sr, servingMultiplier: multiplier } : sr
-        );
-      }
-      return [...prev, { recipe, servingMultiplier: multiplier }];
-    });
-  }, [setSelectedRecipes]);
+    addToList(recipe, multiplier);
+  }, [addToList]);
 
   const handleRemoveFromList = useCallback((recipeId: string) => {
-    setSelectedRecipes((prev) => prev.filter((sr) => sr.recipe.id !== recipeId));
-  }, [setSelectedRecipes]);
+    removeFromList(recipeId);
+  }, [removeFromList]);
 
   const handleUpdateMultiplier = useCallback((recipeId: string, multiplier: number) => {
-    setSelectedRecipes((prev) =>
-      prev.map((sr) =>
-        sr.recipe.id === recipeId ? { ...sr, servingMultiplier: multiplier } : sr
-      )
-    );
-  }, [setSelectedRecipes]);
+    updateMultiplier(recipeId, multiplier);
+  }, [updateMultiplier]);
 
   const handleToggleFavorite = useCallback((recipeId: string) => {
-    setFavoriteIds((prev) =>
-      prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId]
-    );
-  }, [setFavoriteIds]);
+    toggleFavorite(recipeId);
+  }, [toggleFavorite]);
 
   const handleSaveRecipe = useCallback((recipe: Recipe) => {
-    setRecipes((prev) => {
-      const exists = prev.find((r) => r.id === recipe.id);
-      if (exists) {
-        // Update existing recipe
-        return prev.map((r) => (r.id === recipe.id ? recipe : r));
-      }
-      // Add new recipe at top
-      return [recipe, ...prev];
-    });
-    // If the updated recipe is in the selected list, sync it there too
-    setSelectedRecipes((prev) =>
-      prev.map((sr) => (sr.recipe.id === recipe.id ? { ...sr, recipe } : sr))
-    );
-  }, [setRecipes, setSelectedRecipes]);
+    saveRecipe(recipe);
+    // Keep shopping list in sync if this recipe is already selected
+    // (useShoppingSelections resolves by ID so edits auto-propagate via recipeMap)
+  }, [saveRecipe]);
 
   const handleDeleteRecipe = useCallback((recipeId: string) => {
     if (!window.confirm('Are you sure you want to delete this recipe?')) return;
-    setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
-    setSelectedRecipes((prev) => prev.filter((sr) => sr.recipe.id !== recipeId));
-    setFavoriteIds((prev) => prev.filter((id) => id !== recipeId));
+    deleteRecipe(recipeId);
+    removeFromList(recipeId);
     setIsDetailOpen(false);
     setActiveRecipeDetail(null);
-  }, [setRecipes, setSelectedRecipes, setFavoriteIds]);
+  }, [deleteRecipe, removeFromList]);
 
   const handleToggleCheck = useCallback((key: string) => {
-    setCheckedItemKeys((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
-  }, [setCheckedItemKeys]);
+    toggleCheck(key);
+  }, [toggleCheck]);
 
-  const handleClearList = useCallback(() => {
+  const handleClearList = useCallback(async () => {
     if (!window.confirm('Clear all selected recipes?')) return;
-    setSelectedRecipes([]);
-    setCheckedItemKeys([]);
-  }, [setSelectedRecipes, setCheckedItemKeys]);
+    await clearSelections();
+    await clearAllChecked();
+  }, [clearSelections, clearAllChecked]);
 
-  // Save an ingredient-specific store override (or clear it with storeId = "")
   const handleSetIngredientStore = useCallback((normalizedName: string, storeId: string) => {
-    setStorePreferences((prev) => {
-      const overrides = { ...(prev.ingredientOverrides ?? {}) };
-      if (storeId === '') {
-        delete overrides[normalizedName];
-      } else {
-        overrides[normalizedName] = storeId;
-      }
-      return { ...prev, ingredientOverrides: overrides };
-    });
-  }, [setStorePreferences]);
+    setIngredientStore(normalizedName, storeId);
+  }, [setIngredientStore]);
 
   const handleClearChecked = useCallback(() => {
     const currentItems = mergeIngredients(allShoppingRecipes);
     const currentKeys = new Set(currentItems.map((i) => itemKey(i.name, i.unit)));
-    setCheckedItemKeys((prev) => prev.filter((k) => !currentKeys.has(k)));
-  }, [allShoppingRecipes, setCheckedItemKeys]);
+    clearChecked(currentKeys);
+  }, [allShoppingRecipes, clearChecked]);
 
   const handleViewDetail = useCallback((recipe: Recipe) => {
     setActiveRecipeDetail(recipe);
@@ -290,33 +283,25 @@ export default function App() {
     setIsAddEditOpen(true);
   };
 
-  // Get the current multiplier for a recipe in the selected list
   const getSelectedMultiplier = (recipeId: string): number => {
     return selectedRecipes.find((sr) => sr.recipe.id === recipeId)?.servingMultiplier ?? 1;
   };
 
   // ---- Star rating ----
   const handleRateRecipe = useCallback((recipeId: string, rating: number) => {
-    setRecipes((prev) =>
-      prev.map((r) => r.id === recipeId ? { ...r, rating: rating || undefined } : r)
-    );
-    // Keep detail view in sync
-    setActiveRecipeDetail((prev) =>
-      prev?.id === recipeId ? { ...prev, rating: rating || undefined } : prev
-    );
-  }, [setRecipes]);
+    rateRecipe(recipeId, rating);
+  }, [rateRecipe]);
 
   // ---- Plan-for-day shortcut ----
   const handleAssignToPlanner = useCallback(
     (dateKey: string, meal: keyof MealPlanDay, dayLabel: string, mealLabel: string) => {
       if (!planningRecipe) return;
-      const updated = {
+      const updated: MealPlan = {
         ...mealPlan,
         [dateKey]: { ...mealPlan[dateKey], [meal]: planningRecipe.id },
       };
       setMealPlan(updated);
       setPlanningRecipe(null);
-      // Show toast
       const msg = `Planned for ${dayLabel} ${mealLabel.toLowerCase()}`;
       setPlanToast(msg);
       if (planToastTimer.current) clearTimeout(planToastTimer.current);
@@ -340,7 +325,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = "pattys-recipes.json";
+    a.download = 'pattys-recipes.json';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -356,10 +341,10 @@ export default function App() {
           throw new Error('Invalid recipe file format');
         }
         if (window.confirm(`Import ${imported.length} recipes? Duplicates will be skipped.`)) {
-          setRecipes((prev) => {
-            const existingIds = new Set(prev.map((r) => r.id));
-            return [...prev, ...imported.filter((r) => !existingIds.has(r.id))];
-          });
+          const existingIds = new Set(recipes.map((r) => r.id));
+          imported
+            .filter((r) => !existingIds.has(r.id))
+            .forEach((r) => saveRecipe(r));
         }
       } catch (err: unknown) {
         alert('Import failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -371,8 +356,16 @@ export default function App() {
 
   // ---- Render helpers ----
 
-  // Recipe grid (shared between Recipes and Favorites tabs)
   const renderRecipeGrid = (recipeList: Recipe[], emptyMessage: string) => {
+    if (recipesLoading) {
+      return (
+        <div className="text-center py-24 px-4">
+          <div className="text-5xl mb-4 animate-pulse">🍳</div>
+          <p className="text-stone-400 text-base">Loading your recipes…</p>
+        </div>
+      );
+    }
+
     if (recipeList.length === 0) {
       return (
         <div className="text-center py-24 px-4">
@@ -407,6 +400,54 @@ export default function App() {
     );
   };
 
+  // ---- Auth / migration gate ----
+
+  // Still initializing the session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#fdf8f0] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4 animate-pulse">🍽️</div>
+          <p className="text-stone-400">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not signed in
+  if (!user) return <AuthPage />;
+
+  // Migration check in progress
+  if (migrationState === 'checking') {
+    return (
+      <div className="min-h-screen bg-[#fdf8f0] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4 animate-pulse">🍽️</div>
+          <p className="text-stone-400">Loading your recipes…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Migration prompt
+  if (migrationState === 'prompt' && migrationSnapshot) {
+    return (
+      <MigrationPrompt
+        snapshot={migrationSnapshot}
+        onAccept={async () => {
+          await performMigration(user.id, migrationSnapshot);
+          await reloadRecipes();
+          setMigrationState('done');
+        }}
+        onDecline={async () => {
+          await declineMigration(user.id);
+          await reloadRecipes();
+          setMigrationState('done');
+        }}
+      />
+    );
+  }
+
   // ---- Main render ----
 
   return (
@@ -417,10 +458,11 @@ export default function App() {
         onTabChange={setActiveTab}
         shoppingListCount={shoppingListCount}
         selectedRecipesCount={selectedRecipes.length}
+        onSignOut={signOut}
+        userEmail={user.email}
       />
 
       {/* Page content */}
-      {/* pb-24 on mobile = room for fixed bottom tab bar */}
       <main className="max-w-7xl mx-auto px-4 pt-5 sm:pt-8 pb-28 sm:pb-8">
 
         {/* ---- RECIPES TAB ---- */}
@@ -476,7 +518,13 @@ export default function App() {
               {/* Recipe grid */}
               {renderRecipeGrid(
                 filteredRecipes,
-                filters.search || filters.difficulty !== 'All' || filters.proteinType !== 'All' || filters.mealType !== 'All' || filters.maxTime !== null || filters.minTime !== null || filters.favoritesOnly
+                filters.search ||
+                  filters.difficulty !== 'All' ||
+                  filters.proteinType !== 'All' ||
+                  filters.mealType !== 'All' ||
+                  filters.maxTime !== null ||
+                  filters.minTime !== null ||
+                  filters.favoritesOnly
                   ? 'Try adjusting your filters — something delicious is waiting!'
                   : 'Your recipe box is empty. Tap "Add Recipe" to start building your family cookbook!'
               )}
@@ -492,7 +540,6 @@ export default function App() {
                   onViewShoppingList={() => setActiveTab('shopping')}
                 />
 
-                {/* Edit/Delete buttons for selected recipes */}
                 {selectedRecipes.length > 0 && (
                   <div className="mt-4 text-center">
                     <button
@@ -538,7 +585,7 @@ export default function App() {
         {activeTab === 'pantry' && (
           <Pantry
             pantryItems={pantryItems}
-            onUpdatePantry={setPantryItems}
+            onUpdatePantry={updatePantry}
           />
         )}
       </main>
@@ -588,7 +635,7 @@ export default function App() {
       {showStoreSettings && (
         <StorePreferencesModal
           prefs={safeStorePrefs}
-          onChange={setStorePreferences}
+          onChange={updateStorePreferences}
           onClose={() => setShowStoreSettings(false)}
         />
       )}

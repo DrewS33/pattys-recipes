@@ -8,6 +8,8 @@ interface NavigationProps {
   onTabChange: (tab: 'recipes' | 'shopping' | 'pantry' | 'planner') => void;
   shoppingListCount: number;
   selectedRecipesCount: number;
+  onSignOut?: () => void;
+  userEmail?: string | undefined;
 }
 
 const tabs = [
@@ -22,6 +24,8 @@ export default function Navigation({
   onTabChange,
   shoppingListCount,
   selectedRecipesCount,
+  onSignOut,
+  userEmail,
 }: NavigationProps) {
   return (
     <>
@@ -44,12 +48,30 @@ export default function Navigation({
             </div>
           </div>
 
-          {/* Selected recipes indicator — desktop only */}
-          {selectedRecipesCount > 0 && (
-            <div className="hidden sm:flex items-center gap-2 bg-primary-50 border border-primary-100 text-primary-700 rounded-full px-4 py-1.5 text-sm font-medium">
-              🍴 {selectedRecipesCount} recipe{selectedRecipesCount !== 1 ? 's' : ''} in your list
-            </div>
-          )}
+          {/* Right side: selected recipes indicator + sign out */}
+          <div className="hidden sm:flex items-center gap-3">
+            {selectedRecipesCount > 0 && (
+              <div className="flex items-center gap-2 bg-primary-50 border border-primary-100 text-primary-700 rounded-full px-4 py-1.5 text-sm font-medium">
+                🍴 {selectedRecipesCount} recipe{selectedRecipesCount !== 1 ? 's' : ''} in your list
+              </div>
+            )}
+            {onSignOut && (
+              <div className="flex items-center gap-2">
+                {userEmail && (
+                  <span className="text-xs text-stone-400 hidden lg:block max-w-[160px] truncate" title={userEmail}>
+                    {userEmail}
+                  </span>
+                )}
+                <button
+                  onClick={onSignOut}
+                  title="Sign out"
+                  className="text-xs text-stone-500 hover:text-stone-700 border border-stone-200 rounded-lg px-2.5 py-1.5 hover:bg-stone-100 transition-colors font-medium"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Desktop tab navigation (sm+) ── */}
