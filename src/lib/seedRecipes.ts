@@ -133,19 +133,34 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
     return false;
   }
 
-  // 4. Insert missing defaults in batches
+  // 4. Insert missing defaults in batches.
+  //    Each recipe gets a fresh UUID — the original recipe.id is a template
+  //    identifier and must never be reused across user accounts.
+  //    default_key is the stable identity; id is just the DB primary key.
   let insertedCount = 0;
   for (let i = 0; i < missing.length; i += BATCH_SIZE) {
     const batch = missing.slice(i, i + BATCH_SIZE);
-    const batchIds = batch.map((r) => r.id);
 
-    const recipeRows = batch.map((r) => ({
-      ...recipeToRow(r, userId),
-      is_default: true,
-      default_key: DEFAULT_KEY_BY_ID[r.id],
+    // Assign a new UUID to each recipe in this batch up front so both the
+    // recipe row and its child rows reference the same new id.
+    const batchWithNewIds = batch.map((r) => ({
+      recipe: r,
+      newId: crypto.randomUUID(),
     }));
 
-    console.log(`[seed:ensure] Inserting recipe batch ${i / BATCH_SIZE + 1}:`, batch.map((r) => DEFAULT_KEY_BY_ID[r.id]));
+    console.log(
+      `[seed:ensure] Inserting recipe batch ${i / BATCH_SIZE + 1}:`,
+      batchWithNewIds.map(({ recipe, newId }) =>
+        `${DEFAULT_KEY_BY_ID[recipe.id]} (original: ${recipe.id} → new: ${newId})`
+      )
+    );
+
+    const recipeRows = batchWithNewIds.map(({ recipe, newId }) => ({
+      ...recipeToRow(recipe, userId),
+      id: newId,                            // override with fresh UUID
+      is_default: true,
+      default_key: DEFAULT_KEY_BY_ID[recipe.id],
+    }));
 
     const { error: recipeErr } = await supabase
       .from('recipes')
@@ -154,24 +169,12 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
       console.error('[seed:ensure] ❌ Recipe insert failed:', recipeErr);
       throw recipeErr;
     }
+    console.log(`[seed:ensure] ✅ Recipes inserted (${recipeRows.length} rows)`);
 
-    // Guard: only insert ingredients/instructions for recipe IDs that were
-    // just created. If a recipe ID already existed in the DB (e.g. an
-    // old pre-migration row without a default_key), the recipe insert above
-    // would have failed first — so reaching here means all rows are new.
-    // We still double-check by querying existing ingredient recipe_ids so
-    // we never attempt a duplicate insert.
-    const { data: existingIngRows } = await supabase
-      .from('recipe_ingredients')
-      .select('recipe_id')
-      .in('recipe_id', batchIds);
-
-    const idsWithIngredients = new Set((existingIngRows ?? []).map((r: { recipe_id: string }) => r.recipe_id));
-    const recipesNeedingIngredients = batch.filter((r) => !idsWithIngredients.has(r.id));
-
-    console.log(`[seed:ensure] ${recipesNeedingIngredients.length}/${batch.length} recipes in batch need ingredient insert`);
-
-    const ingredientRows = recipesNeedingIngredients.flatMap((r) => ingredientsToRows(r, userId));
+    // Build ingredient rows using the NEW id for recipe_id.
+    const ingredientRows = batchWithNewIds.flatMap(({ recipe, newId }) =>
+      ingredientsToRows(recipe, userId).map((row) => ({ ...row, recipe_id: newId }))
+    );
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
         .from('recipe_ingredients')
@@ -183,15 +186,10 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
       console.log(`[seed:ensure] ✅ Ingredients inserted (${ingredientRows.length} rows)`);
     }
 
-    const { data: existingInstRows } = await supabase
-      .from('recipe_instructions')
-      .select('recipe_id')
-      .in('recipe_id', batchIds);
-
-    const idsWithInstructions = new Set((existingInstRows ?? []).map((r: { recipe_id: string }) => r.recipe_id));
-    const recipesNeedingInstructions = batch.filter((r) => !idsWithInstructions.has(r.id));
-
-    const instructionRows = recipesNeedingInstructions.flatMap((r) => instructionsToRows(r, userId));
+    // Build instruction rows using the NEW id for recipe_id.
+    const instructionRows = batchWithNewIds.flatMap(({ recipe, newId }) =>
+      instructionsToRows(recipe, userId).map((row) => ({ ...row, recipe_id: newId }))
+    );
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
         .from('recipe_instructions')
