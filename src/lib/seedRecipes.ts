@@ -156,13 +156,15 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
       throw recipeErr;
     }
 
+    // Plain insert — these are brand-new recipes so there are no existing
+    // ingredients or instructions to conflict with. No on_conflict needed.
     const ingredientRows = batch.flatMap((r) => ingredientsToRows(r, userId));
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
         .from('recipe_ingredients')
-        .upsert(ingredientRows, { onConflict: 'recipe_id,sort_order', ignoreDuplicates: true });
+        .insert(ingredientRows);
       if (ingErr) {
-        console.error('[seed:ensure] ❌ Ingredient upsert failed:', ingErr);
+        console.error('[seed:ensure] ❌ Ingredient insert failed:', ingErr);
         throw ingErr;
       }
       console.log(`[seed:ensure] ✅ Ingredients inserted for batch (${ingredientRows.length} rows)`);
@@ -172,9 +174,9 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
         .from('recipe_instructions')
-        .upsert(instructionRows, { onConflict: 'recipe_id,step_number', ignoreDuplicates: true });
+        .insert(instructionRows);
       if (instErr) {
-        console.error('[seed:ensure] ❌ Instruction upsert failed:', instErr);
+        console.error('[seed:ensure] ❌ Instruction insert failed:', instErr);
         throw instErr;
       }
       console.log(`[seed:ensure] ✅ Instructions inserted for batch (${instructionRows.length} rows)`);
