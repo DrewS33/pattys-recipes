@@ -326,14 +326,19 @@ export default function App() {
   const [restoringDefaults, setRestoringDefaults] = useState(false);
 
   const handleRestoreDefaults = useCallback(async () => {
+    console.log('[App:restore] ▶ Restore Defaults button clicked');
     setRestoringDefaults(true);
     try {
       const added = await restoreDefaultRecipes();
+      console.log('[App:restore] restoreDefaultRecipes resolved, added:', added);
       if (added) {
         addToast('Default recipes restored');
       } else {
-        addToast('All default recipes are already present');
+        addToast('No missing default recipes found — all already present');
       }
+    } catch (err) {
+      console.error('[App:restore] ❌ Restore failed with error:', err);
+      addToast('Restore failed — check the browser console for details');
     } finally {
       setRestoringDefaults(false);
     }

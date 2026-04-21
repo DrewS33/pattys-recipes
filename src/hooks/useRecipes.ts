@@ -235,10 +235,20 @@ export function useRecipes(): UseRecipesReturn {
   }, [user, recipes]);
 
   const restoreDefaultRecipes = useCallback(async (): Promise<boolean> => {
-    if (!user) return false;
+    console.log('[useRecipes:restore] ▶ restoreDefaultRecipes called, user:', user?.id ?? 'null');
+    if (!user) {
+      console.warn('[useRecipes:restore] ⚠ No user — aborting.');
+      return false;
+    }
+    console.log('[useRecipes:restore] Calling ensureDefaultRecipes…');
     const added = await ensureDefaultRecipes(user.id);
+    console.log('[useRecipes:restore] ensureDefaultRecipes returned:', added);
     if (added) {
+      console.log('[useRecipes:restore] Triggering loadRecipes to refresh UI…');
       await loadRecipes(user.id);
+      console.log('[useRecipes:restore] loadRecipes complete.');
+    } else {
+      console.log('[useRecipes:restore] No recipes were added — skipping reload.');
     }
     return added;
   }, [user, loadRecipes]);
