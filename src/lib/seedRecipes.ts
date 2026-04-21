@@ -24,24 +24,24 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
       throw recipeErr;
     }
 
-    // Insert ingredients
+    // Insert ingredients — upsert so a double-seed never produces duplicate rows.
     const ingredientRows = batch.flatMap((r) => ingredientsToRows(r, userId));
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
         .from('recipe_ingredients')
-        .insert(ingredientRows);
+        .upsert(ingredientRows, { onConflict: 'recipe_id,sort_order', ignoreDuplicates: true });
       if (ingErr) {
         console.error('[seed] Failed to insert ingredients:', ingErr.message);
         throw ingErr;
       }
     }
 
-    // Insert instructions
+    // Insert instructions — same upsert approach.
     const instructionRows = batch.flatMap((r) => instructionsToRows(r, userId));
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
         .from('recipe_instructions')
-        .insert(instructionRows);
+        .upsert(instructionRows, { onConflict: 'recipe_id,step_number', ignoreDuplicates: true });
       if (instErr) {
         console.error('[seed] Failed to insert instructions:', instErr.message);
         throw instErr;

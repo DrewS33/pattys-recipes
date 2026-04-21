@@ -115,7 +115,16 @@ export interface PlannerEntryRow {
 // ---- Converters: DB rows → App types -----------------------
 
 export function rowToRecipe(row: RecipeRow): Recipe {
-  const ingredients: Ingredient[] = [...row.recipe_ingredients]
+  // Deduplicate by sort_order before mapping — guards against duplicate DB rows
+  // that can accumulate if seedDefaultRecipes runs more than once.
+  const seenIngOrders = new Set<number>();
+  const uniqueIngRows = row.recipe_ingredients.filter((i) => {
+    if (seenIngOrders.has(i.sort_order)) return false;
+    seenIngOrders.add(i.sort_order);
+    return true;
+  });
+
+  const ingredients: Ingredient[] = [...uniqueIngRows]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((i) => ({
       name: i.ingredient_name,
@@ -126,7 +135,15 @@ export function rowToRecipe(row: RecipeRow): Recipe {
       mergeKey: i.merge_key ?? undefined,
     }));
 
-  const instructions: string[] = [...row.recipe_instructions]
+  // Deduplicate by step_number for the same reason.
+  const seenSteps = new Set<number>();
+  const uniqueInstRows = row.recipe_instructions.filter((i) => {
+    if (seenSteps.has(i.step_number)) return false;
+    seenSteps.add(i.step_number);
+    return true;
+  });
+
+  const instructions: string[] = [...uniqueInstRows]
     .sort((a, b) => a.step_number - b.step_number)
     .map((i) => i.instruction_text);
 
