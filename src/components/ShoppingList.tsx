@@ -344,17 +344,17 @@ export default function ShoppingList({
           </div>
         )}
 
-        {/* Progress bar */}
+        {/* Progress bar — subtle, supportive */}
         {totalItems > 0 && (
-          <div className="no-print bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div className="no-print bg-stone-100 rounded-full h-1.5 overflow-hidden mt-1">
             <div
-              className="bg-primary-500 h-3 rounded-full transition-all duration-300"
+              className="bg-primary-300 h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${(checkedCount / totalItems) * 100}%` }}
             />
           </div>
         )}
         {totalItems > 0 && (
-          <p className="no-print text-xs text-gray-400 mt-1 text-right">
+          <p className="no-print text-xs text-stone-300 mt-1 text-right">
             {checkedCount} of {totalItems} checked
           </p>
         )}
@@ -362,11 +362,8 @@ export default function ShoppingList({
 
       {/* ---- Single control row: View + More + Clear — hidden in Shopping Trip Mode ---- */}
       {!groceryMode && (
-        <div className="flex items-center gap-2 mb-6 no-print">
-          {/* View dropdown */}
-          <label htmlFor="sl-view-select" className="text-sm font-semibold text-stone-500 whitespace-nowrap">
-            View:
-          </label>
+        <div className="flex items-center gap-3 mb-6 no-print">
+          {/* View dropdown — no label, the options are self-explanatory */}
           <select
             id="sl-view-select"
             value={groupingMode}
