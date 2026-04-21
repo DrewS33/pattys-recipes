@@ -173,11 +173,16 @@ export default function RecipeDetail({
                     h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all border px-3 gap-1.5
                     ${shareStatus === 'copied'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : shareStatus === 'error'
+                      ? 'bg-red-50 text-red-600 border-red-200'
                       : 'bg-white hover:bg-amber-100 border-amber-200 text-stone-600'}
                   `}
                   title="Share recipe"
                 >
-                  {shareStatus === 'copied' ? '✓ Copied!' : shareStatus === 'copying' ? '…' : '🔗 Share'}
+                  {shareStatus === 'copied' ? '✓ Copied!'
+                    : shareStatus === 'copying' ? '…'
+                    : shareStatus === 'error' ? '⚠️ Setup needed'
+                    : '🔗 Share'}
                 </button>
               )}
               {/* Favorite button */}
@@ -201,6 +206,25 @@ export default function RecipeDetail({
               </button>
             </div>
           </div>
+
+          {/* Share fallback — shown when clipboard is unavailable */}
+          {shareFallbackUrl && (
+            <div className="mt-3 flex items-center gap-2 bg-white border border-amber-200 rounded-xl px-3 py-2">
+              <span className="text-xs text-stone-500 shrink-0">Share link:</span>
+              <input
+                readOnly
+                value={shareFallbackUrl}
+                onFocus={(e) => e.target.select()}
+                className="flex-1 text-xs text-primary-700 bg-transparent outline-none truncate"
+              />
+              <button
+                onClick={() => { navigator.clipboard.writeText(shareFallbackUrl).catch(() => {}); setShareFallbackUrl(null); setShareStatus('copied'); setTimeout(() => setShareStatus('idle'), 2000); }}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0"
+              >
+                Copy
+              </button>
+            </div>
+          )}
 
           {/* Tags row */}
           <div className="flex flex-wrap gap-2 mt-4">
