@@ -36,7 +36,7 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
 
     const { error: recipeErr } = await supabase
       .from('recipes')
-      .upsert(recipeRows, { onConflict: 'id' });
+      .insert(recipeRows);
     if (recipeErr) {
       console.error('[seed] Failed to insert recipes:', recipeErr.message);
       throw recipeErr;
@@ -46,7 +46,7 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
         .from('recipe_ingredients')
-        .upsert(ingredientRows, { onConflict: 'recipe_id,sort_order', ignoreDuplicates: true });
+        .insert(ingredientRows);
       if (ingErr) {
         console.error('[seed] Failed to insert ingredients:', ingErr.message);
         throw ingErr;
@@ -57,7 +57,7 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
         .from('recipe_instructions')
-        .upsert(instructionRows, { onConflict: 'recipe_id,step_number', ignoreDuplicates: true });
+        .insert(instructionRows);
       if (instErr) {
         console.error('[seed] Failed to insert instructions:', instErr.message);
         throw instErr;
@@ -137,6 +137,7 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
   let insertedCount = 0;
   for (let i = 0; i < missing.length; i += BATCH_SIZE) {
     const batch = missing.slice(i, i + BATCH_SIZE);
+    const batchIds = batch.map((r) => r.id);
 
     const recipeRows = batch.map((r) => ({
       ...recipeToRow(r, userId),
@@ -146,19 +147,31 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
 
     console.log(`[seed:ensure] Inserting recipe batch ${i / BATCH_SIZE + 1}:`, batch.map((r) => DEFAULT_KEY_BY_ID[r.id]));
 
-    // ignoreDuplicates: if somehow the ID already exists (e.g. user renamed a
-    // default but didn't set default_key), skip silently — don't overwrite.
     const { error: recipeErr } = await supabase
       .from('recipes')
-      .upsert(recipeRows, { onConflict: 'id', ignoreDuplicates: true });
+      .insert(recipeRows);
     if (recipeErr) {
-      console.error('[seed:ensure] ❌ Recipe upsert failed:', recipeErr);
+      console.error('[seed:ensure] ❌ Recipe insert failed:', recipeErr);
       throw recipeErr;
     }
 
-    // Plain insert — these are brand-new recipes so there are no existing
-    // ingredients or instructions to conflict with. No on_conflict needed.
-    const ingredientRows = batch.flatMap((r) => ingredientsToRows(r, userId));
+    // Guard: only insert ingredients/instructions for recipe IDs that were
+    // just created. If a recipe ID already existed in the DB (e.g. an
+    // old pre-migration row without a default_key), the recipe insert above
+    // would have failed first — so reaching here means all rows are new.
+    // We still double-check by querying existing ingredient recipe_ids so
+    // we never attempt a duplicate insert.
+    const { data: existingIngRows } = await supabase
+      .from('recipe_ingredients')
+      .select('recipe_id')
+      .in('recipe_id', batchIds);
+
+    const idsWithIngredients = new Set((existingIngRows ?? []).map((r: { recipe_id: string }) => r.recipe_id));
+    const recipesNeedingIngredients = batch.filter((r) => !idsWithIngredients.has(r.id));
+
+    console.log(`[seed:ensure] ${recipesNeedingIngredients.length}/${batch.length} recipes in batch need ingredient insert`);
+
+    const ingredientRows = recipesNeedingIngredients.flatMap((r) => ingredientsToRows(r, userId));
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
         .from('recipe_ingredients')
@@ -167,10 +180,18 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
         console.error('[seed:ensure] ❌ Ingredient insert failed:', ingErr);
         throw ingErr;
       }
-      console.log(`[seed:ensure] ✅ Ingredients inserted for batch (${ingredientRows.length} rows)`);
+      console.log(`[seed:ensure] ✅ Ingredients inserted (${ingredientRows.length} rows)`);
     }
 
-    const instructionRows = batch.flatMap((r) => instructionsToRows(r, userId));
+    const { data: existingInstRows } = await supabase
+      .from('recipe_instructions')
+      .select('recipe_id')
+      .in('recipe_id', batchIds);
+
+    const idsWithInstructions = new Set((existingInstRows ?? []).map((r: { recipe_id: string }) => r.recipe_id));
+    const recipesNeedingInstructions = batch.filter((r) => !idsWithInstructions.has(r.id));
+
+    const instructionRows = recipesNeedingInstructions.flatMap((r) => instructionsToRows(r, userId));
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
         .from('recipe_instructions')
@@ -179,7 +200,7 @@ export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
         console.error('[seed:ensure] ❌ Instruction insert failed:', instErr);
         throw instErr;
       }
-      console.log(`[seed:ensure] ✅ Instructions inserted for batch (${instructionRows.length} rows)`);
+      console.log(`[seed:ensure] ✅ Instructions inserted (${instructionRows.length} rows)`);
     }
 
     insertedCount += batch.length;
