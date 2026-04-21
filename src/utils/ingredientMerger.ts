@@ -11,6 +11,21 @@ function normalizeKey(name: string): string {
     .replace(/s$/, ''); // naive singularize - removes trailing 's'
 }
 
+// Canonical forms for common unit synonyms.
+// Only the merge key uses these — display still shows the original unit.
+const UNIT_ALIASES: Record<string, string> = {
+  cups: 'cup',
+  tablespoon: 'tbsp', tablespoons: 'tbsp', tbs: 'tbsp',
+  teaspoon: 'tsp',   teaspoons: 'tsp',
+  pound: 'lb',       pounds: 'lb',   lbs: 'lb',
+  ounce: 'oz',       ounces: 'oz',
+};
+
+function normalizeUnit(unit: string): string {
+  const lower = unit.toLowerCase().trim();
+  return UNIT_ALIASES[lower] ?? lower;
+}
+
 // ============================================================
 // mergeIngredients: combines all ingredients from selected recipes
 // into a single flat shopping list, merging duplicates where safe
@@ -29,8 +44,10 @@ export function mergeIngredients(selectedRecipes: SelectedRecipe[]): ShoppingLis
         ? ingredient.mergeKey.toLowerCase().trim()
         : normalizeKey(ingredient.name);
 
-      // Include unit in the key so "1 cup onion" and "2 lbs onion" stay separate
-      const fullKey = `${keyBase}|${ingredient.unit.toLowerCase().trim()}`;
+      // Include unit in the key so "1 cup onion" and "2 lbs onion" stay separate.
+      // Normalize synonyms (cups→cup, tablespoon→tbsp, etc.) so e.g. "1 cup broth"
+      // and "2 cups broth" merge rather than appearing as two separate list items.
+      const fullKey = `${keyBase}|${normalizeUnit(ingredient.unit)}`;
 
       if (mergeMap.has(fullKey)) {
         // Safe to merge: same ingredient, same unit
