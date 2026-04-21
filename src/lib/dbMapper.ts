@@ -75,6 +75,7 @@ export interface PantryItemRow {
   category: string;
   is_in_pantry: boolean;
   is_custom: boolean;
+  is_recurring: boolean;
 }
 
 export interface StoreRow {
@@ -157,6 +158,7 @@ export function rowToPantryItem(row: PantryItemRow): PantryItem {
     category: row.category as PantryCategory,
     inPantry: row.is_in_pantry,
     isCustom: row.is_custom,
+    isRecurring: row.is_recurring,
   };
 }
 
@@ -258,6 +260,7 @@ export function pantryItemToRow(item: PantryItem, userId: string): PantryItemRow
     category: item.category,
     is_in_pantry: item.inPantry,
     is_custom: item.isCustom ?? false,
+    is_recurring: item.isRecurring ?? false,
   };
 }
 

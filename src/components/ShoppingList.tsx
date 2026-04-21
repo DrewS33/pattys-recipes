@@ -57,8 +57,8 @@ export default function ShoppingList({
   // Merge all ingredients from selected recipes
   const mergedItems = useMemo(() => mergeIngredients(selectedRecipes), [selectedRecipes]);
 
-  // Split into pantry-excluded vs items to buy
-  const { allItems, pantryHiddenItems } = useMemo(() => {
+  // Split into pantry-excluded vs items to buy, then inject recurring items
+  const { allItems, pantryHiddenItems, recurringItemKeys } = useMemo(() => {
     const hidden: ShoppingListItem[] = [];
     const needed: ShoppingListItem[] = [];
     for (const item of mergedItems) {
@@ -68,7 +68,26 @@ export default function ShoppingList({
         needed.push(item);
       }
     }
-    return { allItems: needed, pantryHiddenItems: hidden };
+
+    // Add recurring items not already present in the list
+    const existingNames = new Set(needed.map((i) => i.name.toLowerCase()));
+    const recurringKeys = new Set<string>();
+    for (const p of pantryItems) {
+      if (!p.isRecurring) continue;
+      if (existingNames.has(p.name.toLowerCase())) continue;
+      const item: ShoppingListItem = {
+        name: p.name,
+        quantity: 1,
+        unit: '',
+        grocerySection: 'Miscellaneous',
+        checked: false,
+        sources: [],
+      };
+      needed.push(item);
+      recurringKeys.add(`${p.name.toLowerCase()}|`);
+    }
+
+    return { allItems: needed, pantryHiddenItems: hidden, recurringItemKeys: recurringKeys };
   }, [mergedItems, pantryItems]);
 
   // Group items by grocery section (for "By Section" mode)
@@ -140,8 +159,15 @@ export default function ShoppingList({
               {item.name}
             </span>
           </div>
-          {!groceryMode && item.sources.length > 0 && (
-            <p className="no-print text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
+          {!groceryMode && (
+            <p className="no-print text-xs text-gray-400 mt-0.5">
+              {recurringItemKeys.has(key) && (
+                <span className="inline-flex items-center gap-0.5 text-amber-600 font-medium mr-1">
+                  🔄 recurring
+                </span>
+              )}
+              {item.sources.join(', ')}
+            </p>
           )}
         </div>
 

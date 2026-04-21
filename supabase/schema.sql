@@ -240,6 +240,7 @@ create table if not exists public.pantry_items (
   category     text not null,
   is_in_pantry boolean not null default false,
   is_custom    boolean not null default false,
+  is_recurring boolean not null default false,
   created_at   timestamptz default now() not null,
   updated_at   timestamptz default now() not null,
   primary key (user_id, id)

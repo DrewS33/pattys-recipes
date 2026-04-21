@@ -129,6 +129,7 @@ export interface PantryItem {
   category: PantryCategory;
   inPantry: boolean;
   isCustom?: boolean;
+  isRecurring?: boolean;
 }
 
 // ============================================================

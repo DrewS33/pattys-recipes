@@ -35,7 +35,7 @@ export function usePantry(): UsePantryReturn {
 
     supabase
       .from('pantry_items')
-      .select('id, user_id, display_name, category, is_in_pantry, is_custom')
+      .select('id, user_id, display_name, category, is_in_pantry, is_custom, is_recurring')
       .eq('user_id', user.id)
       .then(({ data, error }) => {
         if (error) {
@@ -68,7 +68,7 @@ export function usePantry(): UsePantryReturn {
     // Items that changed (toggled, renamed, or newly added)
     const changed = newItems.filter((item) => {
       const old = prevMap.get(item.id);
-      return !old || old.inPantry !== item.inPantry || old.name !== item.name;
+      return !old || old.inPantry !== item.inPantry || old.name !== item.name || old.isRecurring !== item.isRecurring;
     });
 
     // Custom items that were removed

@@ -36,12 +36,22 @@ export default function Pantry({ pantryItems, onUpdatePantry }: PantryProps) {
 
   // ── Counts ─────────────────────────────────────────────────
   const activeCount = pantryItems.filter((i) => i.inPantry).length;
+  const recurringCount = pantryItems.filter((i) => i.isRecurring).length;
 
   // ── Toggle a single item ───────────────────────────────────
   const handleToggle = (id: string) => {
     onUpdatePantry(
       pantryItems.map((item) =>
         item.id === id ? { ...item, inPantry: !item.inPantry } : item
+      )
+    );
+  };
+
+  // ── Toggle always-include recurring ───────────────────────
+  const handleToggleRecurring = (id: string) => {
+    onUpdatePantry(
+      pantryItems.map((item) =>
+        item.id === id ? { ...item, isRecurring: !item.isRecurring } : item
       )
     );
   };
@@ -125,12 +135,20 @@ export default function Pantry({ pantryItems, onUpdatePantry }: PantryProps) {
           be automatically left off your shopping list.
         </p>
 
-        {activeCount > 0 && (
-          <div className="mt-3 inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-full px-4 py-1.5 text-sm font-semibold">
-            <span>✅</span>
-            {activeCount} item{activeCount !== 1 ? 's' : ''} marked as in your pantry
-          </div>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {activeCount > 0 && (
+            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-full px-4 py-1.5 text-sm font-semibold">
+              <span>✅</span>
+              {activeCount} item{activeCount !== 1 ? 's' : ''} in pantry
+            </div>
+          )}
+          {recurringCount > 0 && (
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-full px-4 py-1.5 text-sm font-semibold">
+              <span>🔄</span>
+              {recurringCount} always included
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Search bar ──────────────────────────────────────── */}
@@ -273,6 +291,22 @@ export default function Pantry({ pantryItems, onUpdatePantry }: PantryProps) {
                         {item.inPantry ? 'Have it' : 'Need it'}
                       </span>
 
+                      {/* Always-include toggle */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleRecurring(item.id);
+                        }}
+                        title={item.isRecurring ? 'Always include — click to remove' : 'Add to every shopping list'}
+                        className={`flex-shrink-0 text-sm px-2 py-1 rounded-full border transition-all ${
+                          item.isRecurring
+                            ? 'bg-amber-100 border-amber-300 text-amber-700 font-semibold'
+                            : 'bg-transparent border-stone-200 text-stone-300 hover:border-amber-300 hover:text-amber-500'
+                        }`}
+                      >
+                        🔄
+                      </button>
+
                       {/* Remove button for custom items */}
                       {item.isCustom && (
                         <button
@@ -297,9 +331,9 @@ export default function Pantry({ pantryItems, onUpdatePantry }: PantryProps) {
 
       {/* ── Bottom tip ──────────────────────────────────────── */}
       <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 leading-relaxed">
-        <strong>Tip:</strong> Toggle on everything you keep stocked at home — like
-        salt, pepper, and olive oil. They'll be quietly skipped when you build
-        your shopping list. You can always turn them off if you run out.
+        <strong>Tip:</strong> Toggle on items you always have at home to skip them on your shopping list.
+        Tap 🔄 on any item to mark it as "always include" — things like milk, eggs, or bread will
+        appear on every shopping list automatically, even when no recipe calls for them.
       </div>
     </div>
   );
