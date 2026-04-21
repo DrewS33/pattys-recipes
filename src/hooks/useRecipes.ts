@@ -16,7 +16,7 @@ import {
   ingredientsToRows,
   instructionsToRows,
 } from '../lib/dbMapper';
-import { seedDefaultRecipes } from '../lib/seedRecipes';
+import { seedDefaultRecipes, ensureDefaultRecipes } from '../lib/seedRecipes';
 import { MIGRATION_KEY } from '../lib/migration';
 
 export interface UseRecipesReturn {
@@ -50,16 +50,20 @@ export function useRecipes(): UseRecipesReturn {
         // New user — only seed if migration was already resolved
         const migrationHandled = window.localStorage.getItem(MIGRATION_KEY);
         if (migrationHandled) {
-          // Migration was declined or no local data existed → seed defaults
           if (migrationHandled === 'declined' || migrationHandled === 'no-local-data') {
+            // No import was done — seed all defaults fresh
             await seedDefaultRecipes(userId);
-            return loadRecipes(userId); // reload after seeding
+            return loadRecipes(userId);
           }
-          // 'accepted' — migration just ran, recipes should appear now
-          // (may legitimately be 0 if migration had no recipes)
+          if (migrationHandled === 'accepted') {
+            // Import ran but yielded 0 recipes (e.g. user only had pantry data).
+            // Still ensure Patty's defaults are present.
+            await ensureDefaultRecipes(userId);
+            return loadRecipes(userId);
+          }
         }
-        // If migrationHandled is null, App.tsx is still running the migration
-        // check — don't seed yet. We'll reload after that resolves.
+        // migrationHandled is null → migration check still in progress in App.tsx;
+        // don't seed yet. We'll reload after that resolves.
         setRecipes([]);
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -13,7 +13,7 @@ import {
   pantryItemToRow,
   plannerEntriesToRows,
 } from './dbMapper';
-import { seedDefaultRecipes } from './seedRecipes';
+import { seedDefaultRecipes, ensureDefaultRecipes } from './seedRecipes';
 
 /** The key we set after migration is resolved so it never shows again. */
 export const MIGRATION_KEY = 'patty-migrated-v1';
@@ -109,7 +109,12 @@ export async function performMigration(
 ): Promise<void> {
   const { recipes, pantry, mealPlan, storePrefs, checkedItemKeys } = snapshot;
 
-  // --- Recipes ---
+  // --- Patty's default recipes (always first) ---
+  // Guarantees defaults are present before any local data is merged in.
+  // Name-based dedup means no duplicates even if the user had these recipes locally.
+  await ensureDefaultRecipes(userId);
+
+  // --- Recipes (local import, merged on top of defaults) ---
   for (let i = 0; i < recipes.length; i += BATCH_SIZE) {
     const batch = recipes.slice(i, i + BATCH_SIZE);
 
