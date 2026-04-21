@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { SelectedRecipe, ShoppingListItem, PantryItem, StorePreferences, ShoppingGroupingMode } from '../types';
 import { mergeIngredients, formatQuantity } from '../utils/ingredientMerger';
 import { GROCERY_SECTION_ORDER, GROCERY_SECTION_ICONS } from '../utils/grocerySections';
@@ -48,11 +48,25 @@ export default function ShoppingList({
 }: ShoppingListProps) {
   const [showSmartExport, setShowSmartExport] = useState(false);
   const [showPantryHidden, setShowPantryHidden] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showRecipes, setShowRecipes] = useState(false);
   const [groceryMode, setGroceryMode] = useLocalStorage<boolean>('groceryMode', false);
   const [groupingMode, setGroupingMode] = useLocalStorage<ShoppingGroupingMode>(
     'shoppingGroupingMode',
     'section'
   );
+
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMoreMenu]);
 
   // Merge all ingredients from selected recipes
   const mergedItems = useMemo(() => mergeIngredients(selectedRecipes), [selectedRecipes]);
@@ -237,25 +251,25 @@ export default function ShoppingList({
           </p>
         </div>
 
-        <div className="no-print flex items-center justify-between mb-2">
-          <h2 className="font-display text-2xl font-bold text-stone-800">🛒 Shopping List</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-base font-semibold text-primary-600">
+        <div className="no-print flex items-start justify-between mb-2">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-stone-800">Shopping List</h2>
+            <p className="text-base font-semibold text-primary-600 mt-0.5">
               {remainingCount} item{remainingCount !== 1 ? 's' : ''} remaining
-            </span>
-            {/* Shopping Trip Mode toggle */}
-            <button
-              onClick={() => setGroceryMode((v) => !v)}
-              title={groceryMode ? 'Finish shopping — return to full view' : 'Start Shopping — simplified in-store view with larger text'}
-              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-semibold border transition-all ${
-                groceryMode
-                  ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
-                  : 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300 hover:text-emerald-600'
-              }`}
-            >
-              🛒 {groceryMode ? 'Finish Shopping' : 'Start Shopping'}
-            </button>
+            </p>
           </div>
+          {/* Shopping Trip Mode toggle — subtle secondary action */}
+          <button
+            onClick={() => setGroceryMode((v) => !v)}
+            title={groceryMode ? 'Finish shopping — return to full view' : 'Start Shopping — simplified in-store view with larger text'}
+            className={`flex items-center gap-1 py-1.5 px-3 rounded-full text-xs font-medium border transition-all mt-1 ${
+              groceryMode
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                : 'bg-white text-stone-400 border-stone-200 hover:border-emerald-300 hover:text-emerald-600'
+            }`}
+          >
+            🛒 {groceryMode ? 'Finish Shopping' : 'Start Shopping'}
+          </button>
         </div>
 
         {/* Planner sync banner */}
@@ -269,22 +283,30 @@ export default function ShoppingList({
           </div>
         )}
 
-        {/* Source recipes — hidden in print and in shopping mode */}
+        {/* Source recipes — collapsible, collapsed by default */}
         {!groceryMode && (
-          <div className="no-print bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
-            <p className="text-sm font-semibold text-stone-700 mb-1">
-              Recipes included ({selectedRecipes.length}):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {selectedRecipes.map(({ recipe, servingMultiplier }) => (
-                <span
-                  key={recipe.id}
-                  className="text-xs bg-white text-stone-700 border border-amber-200 rounded-full px-3 py-1 font-medium"
-                >
-                  {recipe.name} ({Math.round(recipe.defaultServings * servingMultiplier * 10) / 10} srv)
-                </span>
-              ))}
-            </div>
+          <div className="no-print mb-4">
+            <button
+              onClick={() => setShowRecipes((v) => !v)}
+              className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              <span className="font-medium">Recipes included ({selectedRecipes.length})</span>
+              <span className="text-xs">{showRecipes ? '▲' : '▾'}</span>
+            </button>
+            {showRecipes && (
+              <div className="mt-2 bg-amber-50 rounded-xl p-3 border border-amber-200">
+                <div className="flex flex-wrap gap-2">
+                  {selectedRecipes.map(({ recipe, servingMultiplier }) => (
+                    <span
+                      key={recipe.id}
+                      className="text-xs bg-white text-stone-700 border border-amber-200 rounded-full px-3 py-1 font-medium"
+                    >
+                      {recipe.name} ({Math.round(recipe.defaultServings * servingMultiplier * 10) / 10} srv)
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -338,75 +360,80 @@ export default function ShoppingList({
         )}
       </div>
 
-      {/* ---- Grouping Toggle + Store Settings — hidden in Shopping Trip Mode ---- */}
-      {!groceryMode && <div className="flex items-center gap-2 mb-5 no-print flex-wrap">
-        {/* Segmented control */}
-        <div className="flex items-center bg-stone-100 rounded-full p-1 gap-0.5">
-          <button
-            onClick={() => setGroupingMode('section')}
-            className={`py-1.5 px-4 rounded-full font-semibold transition-all text-xs whitespace-nowrap ${
-              groupingMode === 'section'
-                ? 'bg-white text-stone-800 shadow-sm'
-                : 'text-stone-500 hover:text-stone-700'
-            }`}
+      {/* ---- View dropdown — hidden in Shopping Trip Mode ---- */}
+      {!groceryMode && (
+        <div className="flex items-center gap-2 mb-5 no-print">
+          <label htmlFor="sl-view-select" className="text-sm font-semibold text-stone-500 whitespace-nowrap">
+            View:
+          </label>
+          <select
+            id="sl-view-select"
+            value={groupingMode}
+            onChange={(e) => {
+              if (e.target.value === 'manage') {
+                onOpenStoreSettings();
+              } else {
+                setGroupingMode(e.target.value as ShoppingGroupingMode);
+              }
+            }}
+            className="py-1.5 px-3 bg-white border border-stone-200 rounded-full text-sm font-semibold text-stone-700 focus:outline-none focus:ring-1 focus:ring-primary-300 cursor-pointer"
           >
-            By Section
-          </button>
-          <button
-            onClick={() => setGroupingMode('store')}
-            className={`py-1.5 px-4 rounded-full font-semibold transition-all text-xs whitespace-nowrap ${
-              groupingMode === 'store'
-                ? 'bg-white text-stone-800 shadow-sm'
-                : 'text-stone-500 hover:text-stone-700'
-            }`}
-          >
-            By Store
-          </button>
+            <option value="section">By Section</option>
+            <option value="store">By Store</option>
+            <option value="manage">Manage Stores…</option>
+          </select>
         </div>
-
-        {/* Manage stores button — always visible so user can find it */}
-        <button
-          onClick={onOpenStoreSettings}
-          className="flex items-center gap-1.5 py-1.5 px-3 text-xs text-stone-500 font-semibold border border-stone-200 rounded-full hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 transition-all"
-        >
-          ⚙️ Manage Stores
-        </button>
-      </div>}
+      )}
 
       {/* Action buttons — hidden when printing and in Shopping Trip Mode */}
       {!groceryMode && (
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-6 no-print">
-          <button
-            onClick={() => window.print()}
-            className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-          >
-            🖨️ Print
-          </button>
-          <button
-            onClick={handleCopyText}
-            className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-          >
-            📋 Copy
-          </button>
-          <button
-            onClick={() => setShowSmartExport(true)}
-            className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
-                       hover:bg-primary-100 transition-colors border border-primary-200
-                       flex items-center justify-center gap-1"
-          >
-            🛍️ Export Grocery-Friendly List
-          </button>
+        <div className="flex items-center gap-2 mb-6 no-print flex-wrap">
+          {/* More ▾ dropdown: Print, Copy, Export */}
+          <div className="relative" ref={moreMenuRef}>
+            <button
+              onClick={() => setShowMoreMenu((v) => !v)}
+              className="flex items-center gap-1.5 py-2 px-4 bg-stone-100 text-stone-700 font-semibold rounded-lg text-sm hover:bg-stone-200 transition-colors"
+            >
+              More <span className="text-xs">▾</span>
+            </button>
+            {showMoreMenu && (
+              <div className="absolute left-0 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg py-1 z-20 min-w-[220px]">
+                <button
+                  onClick={() => { window.print(); setShowMoreMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
+                >
+                  🖨️ Print
+                </button>
+                <button
+                  onClick={() => { handleCopyText(); setShowMoreMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
+                >
+                  📋 Copy
+                </button>
+                <button
+                  onClick={() => { setShowSmartExport(true); setShowMoreMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
+                >
+                  🛍️ Export Grocery-Friendly List
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Clear Checked — only visible when items are checked */}
           {checkedCount > 0 && (
             <button
               onClick={onClearChecked}
-              className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center justify-center gap-1"
+              className="py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center gap-1"
             >
               ✓ Clear Checked ({checkedCount})
             </button>
           )}
+
+          {/* Clear All — right-aligned, secondary destructive */}
           <button
             onClick={onClearList}
-            className="col-span-2 sm:col-auto sm:ml-auto py-3 sm:py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-1"
+            className="ml-auto py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center gap-1"
           >
             🗑️ Clear All
           </button>
