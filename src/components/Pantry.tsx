@@ -131,8 +131,8 @@ export default function Pantry({ pantryItems, onUpdatePantry }: PantryProps) {
           🥫 Pantry Staples
         </h2>
         <p className="text-stone-500 text-sm leading-relaxed">
-          Toggle on the items you already have at home. Anything turned on will
-          be automatically left off your shopping list.
+          Toggle items you already have at home. Checked items will be left off
+          your shopping list, and you can mark others to automatically be added every time.
         </p>
 
         <div className="mt-3 flex flex-wrap gap-2">
