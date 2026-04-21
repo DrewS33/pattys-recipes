@@ -258,14 +258,14 @@ export default function ShoppingList({
               {remainingCount} item{remainingCount !== 1 ? 's' : ''} remaining
             </p>
           </div>
-          {/* Shopping Trip Mode toggle — subtle secondary action */}
+          {/* Shopping Trip Mode toggle — primary contextual action */}
           <button
             onClick={() => setGroceryMode((v) => !v)}
             title={groceryMode ? 'Finish shopping — return to full view' : 'Start Shopping — simplified in-store view with larger text'}
-            className={`flex items-center gap-1 py-1.5 px-3 rounded-full text-xs font-medium border transition-all mt-1 ${
+            className={`flex items-center gap-1.5 py-2 px-4 rounded-full text-sm font-semibold border transition-all mt-0.5 ${
               groceryMode
                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
-                : 'bg-white text-stone-400 border-stone-200 hover:border-emerald-300 hover:text-emerald-600'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
             }`}
           >
             🛒 {groceryMode ? 'Finish Shopping' : 'Start Shopping'}
@@ -360,9 +360,10 @@ export default function ShoppingList({
         )}
       </div>
 
-      {/* ---- View dropdown — hidden in Shopping Trip Mode ---- */}
+      {/* ---- Single control row: View + More + Clear — hidden in Shopping Trip Mode ---- */}
       {!groceryMode && (
-        <div className="flex items-center gap-2 mb-5 no-print">
+        <div className="flex items-center gap-2 mb-6 no-print">
+          {/* View dropdown */}
           <label htmlFor="sl-view-select" className="text-sm font-semibold text-stone-500 whitespace-nowrap">
             View:
           </label>
@@ -382,17 +383,12 @@ export default function ShoppingList({
             <option value="store">By Store</option>
             <option value="manage">Manage Stores…</option>
           </select>
-        </div>
-      )}
 
-      {/* Action buttons — hidden when printing and in Shopping Trip Mode */}
-      {!groceryMode && (
-        <div className="flex items-center gap-2 mb-6 no-print flex-wrap">
           {/* More ▾ dropdown: Print, Copy, Export */}
           <div className="relative" ref={moreMenuRef}>
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="flex items-center gap-1.5 py-2 px-4 bg-stone-100 text-stone-700 font-semibold rounded-lg text-sm hover:bg-stone-200 transition-colors"
+              className="flex items-center gap-1.5 py-1.5 px-3 bg-stone-100 text-stone-600 font-semibold rounded-full text-sm hover:bg-stone-200 transition-colors"
             >
               More <span className="text-xs">▾</span>
             </button>
@@ -424,18 +420,18 @@ export default function ShoppingList({
           {checkedCount > 0 && (
             <button
               onClick={onClearChecked}
-              className="py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center gap-1"
+              className="py-1.5 px-3 bg-yellow-50 text-yellow-700 font-semibold rounded-full text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center gap-1"
             >
               ✓ Clear Checked ({checkedCount})
             </button>
           )}
 
-          {/* Clear All — right-aligned, secondary destructive */}
+          {/* Clear All — far right, muted destructive */}
           <button
             onClick={onClearList}
-            className="ml-auto py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center gap-1"
+            className="ml-auto py-1.5 px-3 text-stone-400 font-medium rounded-full text-sm border border-stone-200 hover:text-red-500 hover:border-red-200 transition-colors flex items-center gap-1"
           >
-            🗑️ Clear All
+            Clear All
           </button>
         </div>
       )}
@@ -459,14 +455,10 @@ export default function ShoppingList({
                   <span className={`sl-section-icon ${groceryMode ? 'text-3xl' : 'text-2xl'}`}>
                     {GROCERY_SECTION_ICONS[section]}
                   </span>
-                  <h3 className={`font-display font-bold text-primary-800 ${groceryMode ? 'text-lg' : 'text-base'}`}>
+                  <h3 className={`font-display font-bold text-stone-700 ${groceryMode ? 'text-lg' : 'text-base'}`}>
                     {section}
                   </h3>
-                  <div className="no-print flex-1 flex items-center mx-1">
-                    <div className="flex-1 border-b border-primary-200" />
-                    <span className="text-primary-300 text-xs px-1.5 select-none">✦</span>
-                    <div className="flex-1 border-b border-primary-200" />
-                  </div>
+                  <div className="no-print flex-1 border-b border-stone-100 mx-1" />
                   <span className="no-print text-xs text-stone-400 italic">
                     {items.length} item{items.length !== 1 ? 's' : ''}
                   </span>
@@ -519,14 +511,10 @@ export default function ShoppingList({
                     className="no-print w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm"
                     style={{ backgroundColor: storeColor }}
                   />
-                  <h3 className={`font-display font-bold text-stone-800 ${groceryMode ? 'text-lg' : 'text-base'}`}>
+                  <h3 className={`font-display font-bold text-stone-700 ${groceryMode ? 'text-lg' : 'text-base'}`}>
                     {group.label}
                   </h3>
-                  <div className="no-print flex-1 flex items-center mx-1">
-                    <div className="flex-1 border-b border-stone-200" />
-                    <span className="text-stone-300 text-xs px-1.5 select-none">✦</span>
-                    <div className="flex-1 border-b border-stone-200" />
-                  </div>
+                  <div className="no-print flex-1 border-b border-stone-100 mx-1" />
                   <span className="no-print text-xs text-stone-400 italic">
                     {visibleItems.length} item{visibleItems.length !== 1 ? 's' : ''}
                   </span>
