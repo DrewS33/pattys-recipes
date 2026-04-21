@@ -129,7 +129,13 @@ export default function RecipeDetail({
 
   const currentServings = Math.round(recipe.defaultServings * multiplier * 10) / 10;
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    document.body.classList.add('printing-recipe');
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('printing-recipe');
+    }, { once: true });
+    window.print();
+  };
 
   return (
     // Backdrop
@@ -326,6 +332,56 @@ export default function RecipeDetail({
               <h3 className="font-display text-lg font-bold text-primary-800 mb-2">🍷 Note dello Chef</h3>
               <p className="text-base text-amber-900 leading-relaxed">{recipe.notes}</p>
             </section>
+          )}
+        </div>
+
+        {/* Print-only clean recipe layout — hidden on screen, rendered when printing */}
+        <div id="print-recipe" className="print-only" style={{ fontFamily: 'Georgia, serif' }}>
+          <span className="rp-brand">Patty's Recipe Box</span>
+          <h1 className="rp-title">{recipe.name}</h1>
+          {recipe.description && <p className="rp-desc">{recipe.description}</p>}
+          <div className="rp-meta">
+            <span>{recipe.difficulty}</span>
+            <span>{recipe.proteinType}</span>
+            <span>{recipe.mealType}</span>
+            <span>Prep: {formatTime(recipe.prepTimeMinutes)}</span>
+            <span>Cook: {formatTime(recipe.cookTimeMinutes)}</span>
+            <span>Total: {formatTime(recipe.totalTimeMinutes)}</span>
+            <span>Serves: {recipe.defaultServings}</span>
+          </div>
+
+          <div className="rp-section">
+            <h2 className="rp-section-title">Ingredients</h2>
+            <ul className="rp-ingredients">
+              {recipe.ingredients.map((ing, idx) => {
+                const scaledQty = Math.round(ing.quantity * multiplier * 100) / 100;
+                return (
+                  <li key={idx} className="rp-ingredient">
+                    <span className="rp-checkbox" />
+                    <span className="rp-qty">{formatQuantity(scaledQty)}{ing.unit ? ` ${ing.unit}` : ''}</span>
+                    <span className="rp-ing-name">
+                      {ing.name}{ing.prepNote ? ` (${ing.prepNote})` : ''}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="rp-section">
+            <h2 className="rp-section-title">Instructions</h2>
+            <ol className="rp-instructions">
+              {recipe.instructions.map((step, idx) => (
+                <li key={idx} className="rp-step">{step}</li>
+              ))}
+            </ol>
+          </div>
+
+          {recipe.notes && (
+            <div className="rp-section">
+              <h2 className="rp-section-title">Chef's Note</h2>
+              <div className="rp-notes-box"><p>{recipe.notes}</p></div>
+            </div>
           )}
         </div>
 

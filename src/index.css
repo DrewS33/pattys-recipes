@@ -99,6 +99,59 @@ body {
     size: letter portrait;
   }
 
+  /* ── Recipe print: hide entire UI, show only #print-recipe ── */
+  body.printing-recipe * { visibility: hidden !important; }
+  body.printing-recipe #print-recipe {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    padding: 0 !important;
+    background: white !important;
+  }
+  body.printing-recipe #print-recipe * { visibility: visible !important; }
+
+  /* Recipe print layout styles */
+  .rp-brand    { font-size: 8pt; color: #666; display: block; margin-bottom: 3pt; }
+  .rp-title    { font-size: 18pt; font-weight: 800; margin: 0 0 3pt; color: #000; line-height: 1.2; }
+  .rp-desc     { font-size: 10pt; color: #333; margin: 0 0 6pt; line-height: 1.4; }
+  .rp-meta     {
+    font-size: 9pt; color: #000; display: flex; flex-wrap: wrap; gap: 3pt 14pt;
+    border-top: 1pt solid #aaa; border-bottom: 1pt solid #aaa;
+    padding: 4pt 0; margin-bottom: 12pt;
+  }
+  .rp-meta span { white-space: nowrap; }
+  .rp-section  { margin-bottom: 12pt; }
+  .rp-section-title {
+    font-size: 11pt; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #000;
+    border-bottom: 1.5pt solid #000; padding-bottom: 3pt; margin: 0 0 5pt;
+  }
+  .rp-ingredients { list-style: none; padding: 0; margin: 0; }
+  .rp-ingredient  {
+    display: flex; align-items: baseline; gap: 6pt;
+    padding: 2pt 0; border-bottom: 0.5pt solid #ddd;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .rp-checkbox {
+    display: inline-block; width: 8pt; height: 8pt; flex-shrink: 0;
+    border: 1pt solid #333; border-radius: 1.5pt;
+    margin-top: 1pt;
+  }
+  .rp-qty      { font-size: 9.5pt; font-weight: 700; min-width: 56pt; text-align: right; color: #000; }
+  .rp-ing-name { font-size: 9.5pt; color: #000; }
+  .rp-instructions { list-style: decimal; padding-left: 16pt; margin: 0; }
+  .rp-step     {
+    font-size: 10pt; color: #000; line-height: 1.45; padding: 3pt 0;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .rp-notes-box {
+    border: 1pt solid #bbb; border-radius: 3pt;
+    padding: 6pt 8pt; margin-top: 2pt;
+  }
+  .rp-notes-box p { font-size: 9.5pt; color: #222; margin: 0; line-height: 1.4; }
+
   /* Force white page — remove print-color-adjust:exact so browser doesn't
      preserve the beige body/container backgrounds */
   html, body {
