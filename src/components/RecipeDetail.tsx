@@ -63,27 +63,44 @@ export default function RecipeDetail({
 }: RecipeDetailProps) {
   // Local multiplier state — initialized from selectedMultiplier or 1
   const [multiplier, setMultiplier] = useState(selectedMultiplier || 1);
-  const [shareStatus, setShareStatus] = useState<'idle' | 'copying' | 'copied'>('idle');
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
+  const [shareFallbackUrl, setShareFallbackUrl] = useState<string | null>(null);
 
   const handleShare = useCallback(async () => {
     if (!recipe || !onShare) return;
     setShareStatus('copying');
+    setShareFallbackUrl(null);
+
     const shareId = await onShare(recipe.id);
-    if (shareId) {
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}?share=${shareId}`;
+    if (!shareId) {
+      // enableSharing failed — likely the SQL columns haven't been added yet
+      setShareStatus('error');
+      setTimeout(() => setShareStatus('idle'), 3000);
+      return;
+    }
+
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}?share=${shareId}`;
+
+    if (navigator.share) {
       try {
-        if (navigator.share) {
-          await navigator.share({ title: recipe.name, url });
-        } else {
-          await navigator.clipboard.writeText(url);
-        }
+        await navigator.share({ title: recipe.name, url });
         setShareStatus('copied');
         setTimeout(() => setShareStatus('idle'), 2000);
       } catch {
-        // user dismissed native share sheet — still show copied state if clipboard succeeded
+        // User dismissed the native share sheet — show URL as manual fallback
+        setShareFallbackUrl(url);
         setShareStatus('idle');
       }
-    } else {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareStatus('copied');
+      setTimeout(() => setShareStatus('idle'), 2000);
+    } catch {
+      // Clipboard not available — show URL so user can copy manually
+      setShareFallbackUrl(url);
       setShareStatus('idle');
     }
   }, [recipe, onShare]);
