@@ -78,6 +78,7 @@ export default function App() {
     rateRecipe,
     reloadRecipes,
     enableSharing,
+    restoreDefaultRecipes,
   } = useRecipes();
 
   const {
@@ -321,6 +322,23 @@ export default function App() {
     setActiveTab('shopping');
   }, [selectedIds, addToList, addToast]);
 
+  // ---- Restore default recipes ----
+  const [restoringDefaults, setRestoringDefaults] = useState(false);
+
+  const handleRestoreDefaults = useCallback(async () => {
+    setRestoringDefaults(true);
+    try {
+      const added = await restoreDefaultRecipes();
+      if (added) {
+        addToast('Default recipes restored');
+      } else {
+        addToast('All default recipes are already present');
+      }
+    } finally {
+      setRestoringDefaults(false);
+    }
+  }, [restoreDefaultRecipes, addToast]);
+
   // ---- Import / Export ----
   const handleExport = () => {
     const json = JSON.stringify(recipes, null, 2);
@@ -486,6 +504,15 @@ export default function App() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 no-print">
+                  <button
+                    onClick={handleRestoreDefaults}
+                    disabled={restoringDefaults}
+                    className="py-2 px-2.5 sm:px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Restore any missing Patty default recipes (won't touch your own recipes or duplicates)"
+                  >
+                    <span>🔄</span>
+                    <span className="hidden sm:inline">{restoringDefaults ? 'Restoring…' : 'Restore Defaults'}</span>
+                  </button>
                   <button
                     onClick={handleExport}
                     className="py-2 px-2.5 sm:px-3 bg-white border border-stone-200 text-stone-500 font-medium rounded-xl text-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5"

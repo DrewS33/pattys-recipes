@@ -1,21 +1,39 @@
 // ============================================================
-// seedRecipes — inserts Patty's default recipes into a new
-// user's account so every account starts with content.
-// Called by useRecipes when a user has 0 recipes in Supabase.
+// seedRecipes — manages Patty's default recipes for every user.
+//
+// KEY GUARANTEE:
+//   ensureDefaultRecipes() inserts every Patty default recipe
+//   that is missing from the user's account, UNLESS the user
+//   has explicitly deleted it (recorded in deleted_default_recipes).
+//
+// It is safe to call at any time — it never overwrites existing
+// recipes and never creates duplicates.
 // ============================================================
 
 import { supabase } from './supabase';
 import { sampleRecipes } from '../data/recipes';
 import { recipeToRow, ingredientsToRows, instructionsToRows } from './dbMapper';
+import { DEFAULT_KEY_BY_ID } from './defaultKeys';
 
-const BATCH_SIZE = 5; // insert N recipes at a time to avoid request size limits
+const BATCH_SIZE = 5;
 
+// ---- Full seed (new accounts only) ------------------------------------------
+
+/**
+ * Inserts ALL of Patty's default recipes into a brand-new account.
+ * Only called when the account has zero recipes and migration was declined
+ * or there was no local data to import.
+ */
 export async function seedDefaultRecipes(userId: string): Promise<void> {
   for (let i = 0; i < sampleRecipes.length; i += BATCH_SIZE) {
     const batch = sampleRecipes.slice(i, i + BATCH_SIZE);
 
-    // Insert recipe rows
-    const recipeRows = batch.map((r) => recipeToRow(r, userId));
+    const recipeRows = batch.map((r) => ({
+      ...recipeToRow(r, userId),
+      is_default: true,
+      default_key: DEFAULT_KEY_BY_ID[r.id] ?? null,
+    }));
+
     const { error: recipeErr } = await supabase
       .from('recipes')
       .upsert(recipeRows, { onConflict: 'id' });
@@ -24,7 +42,6 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
       throw recipeErr;
     }
 
-    // Insert ingredients — upsert so a double-seed never produces duplicate rows.
     const ingredientRows = batch.flatMap((r) => ingredientsToRows(r, userId));
     if (ingredientRows.length > 0) {
       const { error: ingErr } = await supabase
@@ -36,7 +53,6 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
       }
     }
 
-    // Insert instructions — same upsert approach.
     const instructionRows = batch.flatMap((r) => instructionsToRows(r, userId));
     if (instructionRows.length > 0) {
       const { error: instErr } = await supabase
@@ -50,40 +66,72 @@ export async function seedDefaultRecipes(userId: string): Promise<void> {
   }
 }
 
-/**
- * Ensures all of Patty's default recipes exist for the user without creating
- * duplicates. Safe to call even when the account already has recipes — any
- * default whose name (case-insensitive) is already present is skipped.
- * Used when importing local data so defaults are always guaranteed alongside
- * the user's own recipes.
- */
-export async function ensureDefaultRecipes(userId: string): Promise<void> {
-  const { data: existing, error: fetchErr } = await supabase
-    .from('recipes')
-    .select('name')
-    .eq('user_id', userId);
+// ---- Incremental ensure (existing accounts) ---------------------------------
 
-  if (fetchErr) {
-    console.error('[seed] Failed to fetch existing recipe names:', fetchErr.message);
-    throw fetchErr;
+/**
+ * Inserts any Patty default recipes the user is missing, respecting explicit
+ * deletions. Safe to call at any time (login, after import, on demand).
+ *
+ * Matching is done by default_key — not by name — so renamed/edited copies of
+ * a default are treated as already present and are never overwritten.
+ *
+ * Returns true if any recipes were added (caller may want to reload the list).
+ */
+export async function ensureDefaultRecipes(userId: string): Promise<boolean> {
+  // 1. Which defaults does the user already have? (by default_key)
+  const { data: existingRows, error: existErr } = await supabase
+    .from('recipes')
+    .select('default_key')
+    .eq('user_id', userId)
+    .not('default_key', 'is', null);
+
+  if (existErr) {
+    console.error('[seed] Failed to fetch existing default keys:', existErr.message);
+    throw existErr;
   }
 
-  const existingNames = new Set(
-    (existing ?? []).map((r: { name: string }) => r.name.trim().toLowerCase())
+  const existingKeys = new Set(
+    (existingRows ?? []).map((r: { default_key: string }) => r.default_key)
   );
 
-  const missing = sampleRecipes.filter(
-    (r) => !existingNames.has(r.name.trim().toLowerCase())
+  // 2. Which defaults has the user explicitly deleted?
+  const { data: deletedRows, error: delErr } = await supabase
+    .from('deleted_default_recipes')
+    .select('default_key')
+    .eq('user_id', userId);
+
+  if (delErr) {
+    console.error('[seed] Failed to fetch deleted default keys:', delErr.message);
+    throw delErr;
+  }
+
+  const deletedKeys = new Set(
+    (deletedRows ?? []).map((r: { default_key: string }) => r.default_key)
   );
 
-  if (missing.length === 0) return;
+  // 3. Filter to only the defaults that are truly missing
+  const missing = sampleRecipes.filter((r) => {
+    const key = DEFAULT_KEY_BY_ID[r.id];
+    if (!key) return false;           // not a known default — shouldn't happen
+    if (existingKeys.has(key)) return false;  // user already has it
+    if (deletedKeys.has(key)) return false;   // user deliberately deleted it
+    return true;
+  });
 
+  if (missing.length === 0) return false;
+
+  // 4. Insert missing defaults in batches
   for (let i = 0; i < missing.length; i += BATCH_SIZE) {
     const batch = missing.slice(i, i + BATCH_SIZE);
 
-    const recipeRows = batch.map((r) => recipeToRow(r, userId));
-    // ignoreDuplicates: skip silently if the ID already exists (e.g. user
-    // renamed a Patty default locally — don't overwrite their version).
+    const recipeRows = batch.map((r) => ({
+      ...recipeToRow(r, userId),
+      is_default: true,
+      default_key: DEFAULT_KEY_BY_ID[r.id],
+    }));
+
+    // ignoreDuplicates: if somehow the ID already exists (e.g. user renamed a
+    // default but didn't set default_key), skip silently — don't overwrite.
     const { error: recipeErr } = await supabase
       .from('recipes')
       .upsert(recipeRows, { onConflict: 'id', ignoreDuplicates: true });
@@ -114,4 +162,7 @@ export async function ensureDefaultRecipes(userId: string): Promise<void> {
       }
     }
   }
+
+  console.log(`[seed] Restored ${missing.length} missing default recipe(s).`);
+  return true;
 }

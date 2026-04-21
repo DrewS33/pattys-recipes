@@ -80,6 +80,8 @@ export interface Recipe {
   rating?: number;          // 1–5 stars, undefined = unrated
   shareId?: string;         // unique public share token
   isShareable?: boolean;    // true = publicly accessible via share link
+  isDefault?: boolean;      // true = one of Patty's built-in default recipes
+  defaultKey?: string;      // stable identifier for this default recipe (e.g. 'baked_artichoke_chicken')
 }
 
 // ============================================================

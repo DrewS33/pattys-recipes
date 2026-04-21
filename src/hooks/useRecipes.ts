@@ -1,9 +1,14 @@
 // ============================================================
 // useRecipes — loads and manages the user's recipe list.
-// Replaces the old useLocalStorage('recipes-v2', ...) call.
 //
-// On first login with 0 recipes AND no local data (or after
-// declining migration), seeds Patty's default recipes.
+// Default-recipe guarantees enforced here:
+//   1. New accounts get all Patty defaults seeded on first load.
+//   2. Existing accounts are checked once per browser session for
+//      missing defaults and have them silently restored.
+//   3. Deleting a default recipe records the deletion so it is
+//      never automatically re-seeded.
+//   4. restoreDefaultRecipes() lets the user (or admin) manually
+//      repair a missing-defaults situation on demand.
 // ============================================================
 
 import { useState, useEffect, useCallback } from 'react';
@@ -19,6 +24,9 @@ import {
 import { seedDefaultRecipes, ensureDefaultRecipes } from '../lib/seedRecipes';
 import { MIGRATION_KEY } from '../lib/migration';
 
+// Checked once per browser session so we don't run on every hot-reload / tab focus.
+const SESSION_DEFAULTS_CHECKED = 'patty-defaults-checked';
+
 export interface UseRecipesReturn {
   recipes: Recipe[];
   loading: boolean;
@@ -26,10 +34,16 @@ export interface UseRecipesReturn {
   deleteRecipe: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   rateRecipe: (id: string, rating: number) => Promise<void>;
-  /** Call after migration is done to force a fresh load. */
+  /** Force a fresh load from Supabase. */
   reloadRecipes: () => Promise<void>;
-  /** Enable sharing for a recipe — generates a share_id if needed and returns it. */
+  /** Enable sharing — generates a share_id if needed and returns it. */
   enableSharing: (recipeId: string) => Promise<string | null>;
+  /**
+   * Restore any missing Patty default recipes for the current user.
+   * Respects explicit deletions — only truly absent defaults are added.
+   * Returns true if anything was restored.
+   */
+  restoreDefaultRecipes: () => Promise<boolean>;
 }
 
 export function useRecipes(): UseRecipesReturn {
@@ -53,21 +67,27 @@ export function useRecipes(): UseRecipesReturn {
         const migrationHandled = window.localStorage.getItem(MIGRATION_KEY);
         if (migrationHandled) {
           if (migrationHandled === 'declined' || migrationHandled === 'no-local-data') {
-            // No import was done — seed all defaults fresh
             await seedDefaultRecipes(userId);
             return loadRecipes(userId);
           }
           if (migrationHandled === 'accepted') {
-            // Import ran but yielded 0 recipes (e.g. user only had pantry data).
-            // Still ensure Patty's defaults are present.
-            await ensureDefaultRecipes(userId);
+            // Import ran but yielded 0 recipes; ensure defaults are present.
+            const added = await ensureDefaultRecipes(userId);
+            if (added) return loadRecipes(userId);
+          }
+        }
+        // migrationHandled is null → migration check still in progress; wait.
+        setRecipes([]);
+      } else {
+        // Existing account — check once per session for missing defaults.
+        if (!sessionStorage.getItem(SESSION_DEFAULTS_CHECKED)) {
+          sessionStorage.setItem(SESSION_DEFAULTS_CHECKED, '1');
+          const added = await ensureDefaultRecipes(userId);
+          if (added) {
+            // Re-fetch so the newly added defaults appear in the list.
             return loadRecipes(userId);
           }
         }
-        // migrationHandled is null → migration check still in progress in App.tsx;
-        // don't seed yet. We'll reload after that resolves.
-        setRecipes([]);
-      } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setRecipes(data.map((row: any) => rowToRecipe(row)));
       }
@@ -92,7 +112,6 @@ export function useRecipes(): UseRecipesReturn {
   const saveRecipe = useCallback(async (recipe: Recipe) => {
     if (!user) return;
 
-    // Optimistic update
     setRecipes((prev) => {
       const exists = prev.find((r) => r.id === recipe.id);
       return exists
@@ -111,7 +130,6 @@ export function useRecipes(): UseRecipesReturn {
       return;
     }
 
-    // Replace ingredients: delete existing then re-insert
     await supabase.from('recipe_ingredients').delete().eq('recipe_id', recipe.id);
     const ingRows = ingredientsToRows(recipe, user.id);
     if (ingRows.length > 0) {
@@ -119,7 +137,6 @@ export function useRecipes(): UseRecipesReturn {
       if (ingErr) console.error('[useRecipes] ingredient insert failed:', ingErr.message);
     }
 
-    // Replace instructions
     await supabase.from('recipe_instructions').delete().eq('recipe_id', recipe.id);
     const instRows = instructionsToRows(recipe, user.id);
     if (instRows.length > 0) {
@@ -131,17 +148,35 @@ export function useRecipes(): UseRecipesReturn {
   const deleteRecipe = useCallback(async (id: string) => {
     if (!user) return;
 
+    // Look up the recipe before removing it from state so we have its metadata.
+    const recipe = recipes.find((r) => r.id === id);
+
     // Optimistic update
     setRecipes((prev) => prev.filter((r) => r.id !== id));
 
-    // CASCADE on recipe delete handles ingredients, instructions, planner_entries, shopping_selections
+    // If this is a Patty default recipe, record the explicit deletion so
+    // ensureDefaultRecipes never silently restores it in a future session.
+    if (recipe?.defaultKey) {
+      const { error: delRecordErr } = await supabase
+        .from('deleted_default_recipes')
+        .upsert(
+          { user_id: user.id, default_key: recipe.defaultKey },
+          { onConflict: 'user_id,default_key' }
+        );
+      if (delRecordErr) {
+        console.error('[useRecipes] Failed to record default deletion:', delRecordErr.message);
+      }
+    }
+
+    // CASCADE on recipe delete handles ingredients, instructions,
+    // planner_entries, and shopping_selections automatically.
     const { error } = await supabase
       .from('recipes')
       .delete()
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) console.error('[useRecipes] deleteRecipe failed:', error.message);
-  }, [user]);
+  }, [user, recipes]);
 
   const toggleFavorite = useCallback(async (id: string) => {
     if (!user) return;
@@ -183,7 +218,6 @@ export function useRecipes(): UseRecipesReturn {
   const enableSharing = useCallback(async (recipeId: string): Promise<string | null> => {
     if (!user) return null;
     const existing = recipes.find((r) => r.id === recipeId);
-    // Re-use existing share_id if already shareable
     const shareId = existing?.shareId ?? crypto.randomUUID();
     const { error } = await supabase
       .from('recipes')
@@ -200,5 +234,24 @@ export function useRecipes(): UseRecipesReturn {
     return shareId;
   }, [user, recipes]);
 
-  return { recipes, loading, saveRecipe, deleteRecipe, toggleFavorite, rateRecipe, reloadRecipes, enableSharing };
+  const restoreDefaultRecipes = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    const added = await ensureDefaultRecipes(user.id);
+    if (added) {
+      await loadRecipes(user.id);
+    }
+    return added;
+  }, [user, loadRecipes]);
+
+  return {
+    recipes,
+    loading,
+    saveRecipe,
+    deleteRecipe,
+    toggleFavorite,
+    rateRecipe,
+    reloadRecipes,
+    enableSharing,
+    restoreDefaultRecipes,
+  };
 }

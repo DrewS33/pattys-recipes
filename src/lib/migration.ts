@@ -14,6 +14,7 @@ import {
   plannerEntriesToRows,
 } from './dbMapper';
 import { seedDefaultRecipes, ensureDefaultRecipes } from './seedRecipes';
+import { DEFAULT_RECIPE_IDS } from './defaultKeys';
 
 /** The key we set after migration is resolved so it never shows again. */
 export const MIGRATION_KEY = 'patty-migrated-v1';
@@ -110,13 +111,18 @@ export async function performMigration(
   const { recipes, pantry, mealPlan, storePrefs, checkedItemKeys } = snapshot;
 
   // --- Patty's default recipes (always first) ---
-  // Guarantees defaults are present before any local data is merged in.
-  // Name-based dedup means no duplicates even if the user had these recipes locally.
+  // ensureDefaultRecipes uses default_key matching, so it never overwrites
+  // recipes the user already has and never duplicates defaults.
   await ensureDefaultRecipes(userId);
 
   // --- Recipes (local import, merged on top of defaults) ---
-  for (let i = 0; i < recipes.length; i += BATCH_SIZE) {
-    const batch = recipes.slice(i, i + BATCH_SIZE);
+  // Skip any recipe whose ID is a known Patty default — ensureDefaultRecipes
+  // already handled those, and re-importing would overwrite the user's
+  // ratings/favorites on those recipes with old local data.
+  const nonDefaultRecipes = recipes.filter((r) => !DEFAULT_RECIPE_IDS.has(r.id));
+
+  for (let i = 0; i < nonDefaultRecipes.length; i += BATCH_SIZE) {
+    const batch = nonDefaultRecipes.slice(i, i + BATCH_SIZE);
 
     const { error: rErr } = await supabase
       .from('recipes')
