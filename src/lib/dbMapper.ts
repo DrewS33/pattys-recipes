@@ -41,6 +41,8 @@ export interface RecipeRow {
   notes: string | null;
   is_favorite: boolean;
   rating: number | null;
+  share_id: string | null;
+  is_shareable: boolean;
   created_at: string;
   updated_at: string;
   recipe_ingredients: IngredientRow[];
@@ -163,6 +165,8 @@ export function rowToRecipe(row: RecipeRow): Recipe {
     notes: row.notes ?? undefined,
     favorite: row.is_favorite,
     rating: row.rating ?? undefined,
+    shareId: row.share_id ?? undefined,
+    isShareable: row.is_shareable,
     ingredients,
     instructions,
   };
@@ -237,6 +241,8 @@ export function recipeToRow(recipe: Recipe, userId: string): Omit<RecipeRow, 're
     notes: recipe.notes ?? null,
     is_favorite: recipe.favorite,
     rating: recipe.rating ?? null,
+    share_id: recipe.shareId ?? null,
+    is_shareable: recipe.isShareable ?? false,
   };
 }
 

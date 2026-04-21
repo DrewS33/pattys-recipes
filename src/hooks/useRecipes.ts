@@ -28,6 +28,8 @@ export interface UseRecipesReturn {
   rateRecipe: (id: string, rating: number) => Promise<void>;
   /** Call after migration is done to force a fresh load. */
   reloadRecipes: () => Promise<void>;
+  /** Enable sharing for a recipe — generates a share_id if needed and returns it. */
+  enableSharing: (recipeId: string) => Promise<string | null>;
 }
 
 export function useRecipes(): UseRecipesReturn {
@@ -178,5 +180,25 @@ export function useRecipes(): UseRecipesReturn {
     if (user) await loadRecipes(user.id);
   }, [user, loadRecipes]);
 
-  return { recipes, loading, saveRecipe, deleteRecipe, toggleFavorite, rateRecipe, reloadRecipes };
+  const enableSharing = useCallback(async (recipeId: string): Promise<string | null> => {
+    if (!user) return null;
+    const existing = recipes.find((r) => r.id === recipeId);
+    // Re-use existing share_id if already shareable
+    const shareId = existing?.shareId ?? crypto.randomUUID();
+    const { error } = await supabase
+      .from('recipes')
+      .update({ share_id: shareId, is_shareable: true, updated_at: new Date().toISOString() })
+      .eq('id', recipeId)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('[useRecipes] enableSharing failed:', error.message);
+      return null;
+    }
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === recipeId ? { ...r, shareId, isShareable: true } : r))
+    );
+    return shareId;
+  }, [user, recipes]);
+
+  return { recipes, loading, saveRecipe, deleteRecipe, toggleFavorite, rateRecipe, reloadRecipes, enableSharing };
 }

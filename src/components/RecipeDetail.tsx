@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Recipe } from '../types';
 import StarRating from './StarRating';
 import { formatQuantity } from '../utils/ingredientMerger';
@@ -19,6 +19,7 @@ interface RecipeDetailProps {
   isFavorite: boolean;
   onToggleFavorite: (id: string) => void;
   onRateRecipe: (recipeId: string, rating: number) => void;
+  onShare?: (recipeId: string) => Promise<string | null>;
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -58,9 +59,34 @@ export default function RecipeDetail({
   isFavorite,
   onToggleFavorite,
   onRateRecipe,
+  onShare,
 }: RecipeDetailProps) {
   // Local multiplier state — initialized from selectedMultiplier or 1
   const [multiplier, setMultiplier] = useState(selectedMultiplier || 1);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copying' | 'copied'>('idle');
+
+  const handleShare = useCallback(async () => {
+    if (!recipe || !onShare) return;
+    setShareStatus('copying');
+    const shareId = await onShare(recipe.id);
+    if (shareId) {
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}?share=${shareId}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: recipe.name, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+        }
+        setShareStatus('copied');
+        setTimeout(() => setShareStatus('idle'), 2000);
+      } catch {
+        // user dismissed native share sheet — still show copied state if clipboard succeeded
+        setShareStatus('idle');
+      }
+    } else {
+      setShareStatus('idle');
+    }
+  }, [recipe, onShare]);
 
   // Sync local multiplier when modal opens or selectedMultiplier changes
   useEffect(() => {
@@ -121,6 +147,22 @@ export default function RecipeDetail({
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Share button */}
+              {onShare && (
+                <button
+                  onClick={handleShare}
+                  disabled={shareStatus === 'copying'}
+                  className={`
+                    h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all border px-3 gap-1.5
+                    ${shareStatus === 'copied'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-white hover:bg-amber-100 border-amber-200 text-stone-600'}
+                  `}
+                  title="Share recipe"
+                >
+                  {shareStatus === 'copied' ? '✓ Copied!' : shareStatus === 'copying' ? '…' : '🔗 Share'}
+                </button>
+              )}
               {/* Favorite button */}
               <button
                 onClick={() => onToggleFavorite(recipe.id)}

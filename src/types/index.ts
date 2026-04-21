@@ -78,6 +78,8 @@ export interface Recipe {
   notes?: string;           // optional tips / notes
   image?: string;           // optional image URL or base64
   rating?: number;          // 1–5 stars, undefined = unrated
+  shareId?: string;         // unique public share token
+  isShareable?: boolean;    // true = publicly accessible via share link
 }
 
 // ============================================================

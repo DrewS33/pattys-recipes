@@ -77,6 +77,7 @@ export default function App() {
     toggleFavorite,
     rateRecipe,
     reloadRecipes,
+    enableSharing,
   } = useRecipes();
 
   const {
@@ -613,6 +614,7 @@ export default function App() {
         isFavorite={activeRecipeDetail ? favoriteSet.has(activeRecipeDetail.id) : false}
         onToggleFavorite={handleToggleFavorite}
         onRateRecipe={handleRateRecipe}
+        onShare={enableSharing}
       />
 
       {/* Add / Edit Recipe Modal */}
