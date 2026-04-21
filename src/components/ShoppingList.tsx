@@ -121,34 +121,34 @@ export default function ShoppingList({
     return (
       <li
         key={key}
-        className={`flex items-center bg-white border border-gray-200 rounded-xl cursor-pointer active:scale-[0.99] transition-all
+        className={`sl-item-row flex items-center bg-white border border-gray-200 rounded-xl cursor-pointer active:scale-[0.99] transition-all
           ${groceryMode
             ? 'gap-4 p-5 min-h-[76px]'
             : 'gap-3 p-4 min-h-[64px] hover:border-primary-200 hover:bg-primary-50'}`}
         onClick={() => onToggleCheck(key)}
       >
         <div
-          className={`flex-shrink-0 border-2 border-gray-300 flex items-center justify-center transition-all
+          className={`sl-item-checkbox flex-shrink-0 border-2 border-gray-300 flex items-center justify-center transition-all
             ${groceryMode ? 'w-10 h-10 rounded-lg' : 'w-8 h-8 rounded-full'}`}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className={`font-bold text-gray-800 ${groceryMode ? 'text-xl' : 'text-base'}`}>
+            <span className={`sl-item-qty font-bold text-gray-800 ${groceryMode ? 'text-xl' : 'text-base'}`}>
               {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
             </span>
-            <span className={`text-gray-700 ${groceryMode ? 'text-xl' : 'text-base'}`}>
+            <span className={`sl-item-name text-gray-700 ${groceryMode ? 'text-xl' : 'text-base'}`}>
               {item.name}
             </span>
           </div>
           {!groceryMode && item.sources.length > 0 && (
-            <p className="text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
+            <p className="no-print text-xs text-gray-400 mt-0.5">{item.sources.join(', ')}</p>
           )}
         </div>
 
         {/* Per-item store selector — stop propagation so it doesn't toggle the checkbox */}
         {showStoreSelector && (
           <div
-            className="flex-shrink-0 flex items-center gap-1"
+            className="no-print flex-shrink-0 flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Color dot for current effective store */}
@@ -194,11 +194,24 @@ export default function ShoppingList({
 
   return (
     <>
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="sl-print-container max-w-2xl mx-auto px-4 py-6">
 
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
+      <div className="sl-print-header mb-6">
+        {/* Print-only compact summary — hidden on screen */}
+        <div className="print-only mb-1">
+          <p className="font-bold" style={{ fontSize: '14pt', lineHeight: 1.2 }}>Shopping List</p>
+          <p style={{ fontSize: '8.5pt', marginTop: '2pt', color: '#333' }}>
+            Recipes: {selectedRecipes.map(({ recipe, servingMultiplier }) =>
+              `${recipe.name}${servingMultiplier !== 1 ? ` (×${Math.round(servingMultiplier * 10) / 10})` : ''}`
+            ).join(' • ')}
+          </p>
+          <p style={{ fontSize: '7.5pt', color: '#666', marginTop: '1pt' }}>
+            Printed: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </p>
+        </div>
+
+        <div className="no-print flex items-center justify-between mb-2">
           <h2 className="font-display text-2xl font-bold text-stone-800">🛒 Shopping List</h2>
           <div className="flex items-center gap-3">
             <span className="text-base font-semibold text-primary-600">
@@ -221,7 +234,7 @@ export default function ShoppingList({
 
         {/* Planner sync banner */}
         {plannerRecipeCount > 0 && (
-          <div className="bg-violet-50 rounded-xl p-3 border border-violet-200 mb-3 flex items-center gap-2">
+          <div className="no-print bg-violet-50 rounded-xl p-3 border border-violet-200 mb-3 flex items-center gap-2">
             <span className="text-base">📅</span>
             <p className="text-sm text-violet-800 flex-1">
               <strong>{plannerRecipeCount} recipe{plannerRecipeCount !== 1 ? 's' : ''} from your planner</strong>
@@ -230,8 +243,8 @@ export default function ShoppingList({
           </div>
         )}
 
-        {/* Source recipes */}
-        <div className="bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
+        {/* Source recipes — hidden in print (print-only summary above replaces this) */}
+        <div className="no-print bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
           <p className="text-sm font-semibold text-stone-700 mb-1">
             Recipes included ({selectedRecipes.length}):
           </p>
@@ -249,7 +262,7 @@ export default function ShoppingList({
 
         {/* Pantry items hidden notice */}
         {pantryHiddenItems.length > 0 && (
-          <div className="mb-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+          <div className="no-print mb-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
             <span className="text-green-600 text-base">🥫</span>
             <p className="text-sm text-green-800 flex-1">
               <strong>{pantryHiddenItems.length} pantry item{pantryHiddenItems.length !== 1 ? 's' : ''} hidden</strong>
@@ -266,7 +279,7 @@ export default function ShoppingList({
 
         {/* Collapsed pantry items */}
         {showPantryHidden && pantryHiddenItems.length > 0 && (
-          <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+          <div className="no-print mb-3 p-3 bg-green-50 border border-green-200 rounded-xl">
             <p className="text-xs font-semibold text-green-700 mb-2">Already in your pantry (not needed):</p>
             <div className="flex flex-wrap gap-2">
               {pantryHiddenItems.map((item) => (
@@ -283,7 +296,7 @@ export default function ShoppingList({
 
         {/* Progress bar */}
         {totalItems > 0 && (
-          <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div className="no-print bg-gray-200 rounded-full h-3 overflow-hidden">
             <div
               className="bg-primary-500 h-3 rounded-full transition-all duration-300"
               style={{ width: `${(checkedCount / totalItems) * 100}%` }}
@@ -291,7 +304,7 @@ export default function ShoppingList({
           </div>
         )}
         {totalItems > 0 && (
-          <p className="text-xs text-gray-400 mt-1 text-right">
+          <p className="no-print text-xs text-gray-400 mt-1 text-right">
             {checkedCount} of {totalItems} checked
           </p>
         )}
@@ -376,7 +389,7 @@ export default function ShoppingList({
 
       {/* ---- BY SECTION view ---- */}
       {groupingMode === 'section' && (
-        <div className="space-y-6">
+        <div className="sl-sections-container space-y-6">
           {GROCERY_SECTION_ORDER.map((section) => {
             const items = (sectionGroups[section] ?? []).filter(
               (item) => !checkedItems.has(itemKey(item))
@@ -384,24 +397,24 @@ export default function ShoppingList({
             if (items.length === 0) return null;
 
             return (
-              <div key={section}>
-                <div className="flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
-                  <span className={groceryMode ? 'text-3xl' : 'text-2xl'}>
+              <div key={section} className="sl-section-group">
+                <div className="sl-section-header flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
+                  <span className={`sl-section-icon ${groceryMode ? 'text-3xl' : 'text-2xl'}`}>
                     {GROCERY_SECTION_ICONS[section]}
                   </span>
                   <h3 className={`font-display font-bold text-primary-800 ${groceryMode ? 'text-lg' : 'text-base'}`}>
                     {section}
                   </h3>
-                  <div className="flex-1 flex items-center mx-1">
+                  <div className="no-print flex-1 flex items-center mx-1">
                     <div className="flex-1 border-b border-primary-200" />
                     <span className="text-primary-300 text-xs px-1.5 select-none">✦</span>
                     <div className="flex-1 border-b border-primary-200" />
                   </div>
-                  <span className="text-xs text-stone-400 italic">
+                  <span className="no-print text-xs text-stone-400 italic">
                     {items.length} item{items.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <ul className={groceryMode ? 'space-y-3' : 'space-y-2'}>
+                <ul className={`sl-section-list ${groceryMode ? 'space-y-3' : 'space-y-2'}`}>
                   {items.map(renderItemRow)}
                 </ul>
               </div>
@@ -412,7 +425,7 @@ export default function ShoppingList({
 
       {/* ---- BY STORE view ---- */}
       {groupingMode === 'store' && (
-        <div className="space-y-6">
+        <div className="sl-sections-container space-y-6">
           {/* Empty state: no stores configured */}
           {storePreferences.stores.length === 0 && (
             <div className="text-center py-12 px-4 bg-stone-50 rounded-2xl border border-stone-200">
@@ -441,28 +454,28 @@ export default function ShoppingList({
             const storeColor = group.store?.color ?? '#9CA3AF';
 
             return (
-              <div key={group.label}>
+              <div key={group.label} className="sl-section-group">
                 {/* Store section header */}
-                <div className="flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
+                <div className="sl-section-header flex items-center gap-2 mb-3 sticky top-0 z-10 bg-[#fdf8f0]/95 backdrop-blur-sm py-1.5 -mx-1 px-1">
                   {/* Color dot */}
                   <span
-                    className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm"
+                    className="no-print w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm"
                     style={{ backgroundColor: storeColor }}
                   />
                   <h3 className={`font-display font-bold text-stone-800 ${groceryMode ? 'text-lg' : 'text-base'}`}>
                     {group.label}
                   </h3>
-                  <div className="flex-1 flex items-center mx-1">
+                  <div className="no-print flex-1 flex items-center mx-1">
                     <div className="flex-1 border-b border-stone-200" />
                     <span className="text-stone-300 text-xs px-1.5 select-none">✦</span>
                     <div className="flex-1 border-b border-stone-200" />
                   </div>
-                  <span className="text-xs text-stone-400 italic">
+                  <span className="no-print text-xs text-stone-400 italic">
                     {visibleItems.length} item{visibleItems.length !== 1 ? 's' : ''}
                   </span>
                 </div>
 
-                <ul className={groceryMode ? 'space-y-3' : 'space-y-2'}>
+                <ul className={`sl-section-list ${groceryMode ? 'space-y-3' : 'space-y-2'}`}>
                   {visibleItems.map(renderItemRow)}
                 </ul>
               </div>
@@ -490,7 +503,7 @@ export default function ShoppingList({
 
       {/* Done section — checked items (same in both modes) */}
       {checkedCount > 0 && (
-        <div className="mt-8">
+        <div className="no-print mt-8">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-2xl">✅</span>
             <h3 className="font-display text-base font-bold text-stone-400">Done</h3>
@@ -537,7 +550,7 @@ export default function ShoppingList({
 
       {/* All done message */}
       {totalItems > 0 && checkedCount === totalItems && (
-        <div className="mt-8 text-center p-6 bg-green-50 rounded-2xl border border-green-200">
+        <div className="no-print mt-8 text-center p-6 bg-green-50 rounded-2xl border border-green-200">
           <div className="text-5xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-green-700">All done!</h3>
           <p className="text-green-600 mt-1">Every item has been checked off. Happy cooking!</p>
