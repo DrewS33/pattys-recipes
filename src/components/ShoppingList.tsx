@@ -217,17 +217,17 @@ export default function ShoppingList({
             <span className="text-base font-semibold text-primary-600">
               {remainingCount} item{remainingCount !== 1 ? 's' : ''} remaining
             </span>
-            {/* Grocery Mode toggle */}
+            {/* Shopping Trip Mode toggle */}
             <button
               onClick={() => setGroceryMode((v) => !v)}
-              title={groceryMode ? 'Exit Grocery Mode' : 'Grocery Mode — larger text for in-store use'}
+              title={groceryMode ? 'Finish shopping — return to full view' : 'Start Shopping — simplified in-store view with larger text'}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-semibold border transition-all ${
                 groceryMode
                   ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
                   : 'bg-white text-stone-500 border-stone-200 hover:border-emerald-300 hover:text-emerald-600'
               }`}
             >
-              🛍️ {groceryMode ? 'Exit Store Mode' : 'Store Mode'}
+              🛒 {groceryMode ? 'Finish Shopping' : 'Start Shopping'}
             </button>
           </div>
         </div>
@@ -243,22 +243,24 @@ export default function ShoppingList({
           </div>
         )}
 
-        {/* Source recipes — hidden in print (print-only summary above replaces this) */}
-        <div className="no-print bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
-          <p className="text-sm font-semibold text-stone-700 mb-1">
-            Recipes included ({selectedRecipes.length}):
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {selectedRecipes.map(({ recipe, servingMultiplier }) => (
-              <span
-                key={recipe.id}
-                className="text-xs bg-white text-stone-700 border border-amber-200 rounded-full px-3 py-1 font-medium"
-              >
-                {recipe.name} ({Math.round(recipe.defaultServings * servingMultiplier * 10) / 10} srv)
-              </span>
-            ))}
+        {/* Source recipes — hidden in print and in shopping mode */}
+        {!groceryMode && (
+          <div className="no-print bg-amber-50 rounded-xl p-3 border border-amber-200 mb-4">
+            <p className="text-sm font-semibold text-stone-700 mb-1">
+              Recipes included ({selectedRecipes.length}):
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selectedRecipes.map(({ recipe, servingMultiplier }) => (
+                <span
+                  key={recipe.id}
+                  className="text-xs bg-white text-stone-700 border border-amber-200 rounded-full px-3 py-1 font-medium"
+                >
+                  {recipe.name} ({Math.round(recipe.defaultServings * servingMultiplier * 10) / 10} srv)
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Pantry items hidden notice */}
         {pantryHiddenItems.length > 0 && (
@@ -310,8 +312,8 @@ export default function ShoppingList({
         )}
       </div>
 
-      {/* ---- Grouping Toggle + Store Settings ---- */}
-      <div className="flex items-center gap-2 mb-5 no-print flex-wrap">
+      {/* ---- Grouping Toggle + Store Settings — hidden in Shopping Trip Mode ---- */}
+      {!groceryMode && <div className="flex items-center gap-2 mb-5 no-print flex-wrap">
         {/* Segmented control */}
         <div className="flex items-center bg-stone-100 rounded-full p-1 gap-0.5">
           <button
@@ -343,45 +345,47 @@ export default function ShoppingList({
         >
           ⚙️ Manage Stores
         </button>
-      </div>
+      </div>}
 
-      {/* Action buttons — hidden when printing */}
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-6 no-print">
-        <button
-          onClick={() => window.print()}
-          className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-        >
-          🖨️ Print
-        </button>
-        <button
-          onClick={handleCopyText}
-          className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-        >
-          📋 Copy
-        </button>
-        <button
-          onClick={() => setShowSmartExport(true)}
-          className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
-                     hover:bg-primary-100 transition-colors border border-primary-200
-                     flex items-center justify-center gap-1"
-        >
-          🛍️ Export Grocery-Friendly List
-        </button>
-        {checkedCount > 0 && (
+      {/* Action buttons — hidden when printing and in Shopping Trip Mode */}
+      {!groceryMode && (
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-6 no-print">
           <button
-            onClick={onClearChecked}
-            className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center justify-center gap-1"
+            onClick={() => window.print()}
+            className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
           >
-            ✓ Clear Checked ({checkedCount})
+            🖨️ Print
           </button>
-        )}
-        <button
-          onClick={onClearList}
-          className="col-span-2 sm:col-auto sm:ml-auto py-3 sm:py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-1"
-        >
-          🗑️ Clear All
-        </button>
-      </div>
+          <button
+            onClick={handleCopyText}
+            className="py-3 sm:py-2 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
+          >
+            📋 Copy
+          </button>
+          <button
+            onClick={() => setShowSmartExport(true)}
+            className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-primary-50 text-primary-700 font-semibold rounded-lg text-sm
+                       hover:bg-primary-100 transition-colors border border-primary-200
+                       flex items-center justify-center gap-1"
+          >
+            🛍️ Export Grocery-Friendly List
+          </button>
+          {checkedCount > 0 && (
+            <button
+              onClick={onClearChecked}
+              className="col-span-2 sm:col-auto py-3 sm:py-2 px-4 bg-yellow-50 text-yellow-700 font-semibold rounded-lg text-sm hover:bg-yellow-100 transition-colors border border-yellow-200 flex items-center justify-center gap-1"
+            >
+              ✓ Clear Checked ({checkedCount})
+            </button>
+          )}
+          <button
+            onClick={onClearList}
+            className="col-span-2 sm:col-auto sm:ml-auto py-3 sm:py-2 px-4 bg-red-50 text-red-600 font-semibold rounded-lg text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-1"
+          >
+            🗑️ Clear All
+          </button>
+        </div>
+      )}
 
       {/* ====================================================
           ITEM LIST — conditional on grouping mode

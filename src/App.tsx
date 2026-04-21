@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useToast } from './contexts/ToastContext';
 import { MealPlanDay } from './types';
 import { Recipe, SelectedRecipe, Filters, MealPlan } from './types';
 import { useAuth } from './contexts/AuthContext';
@@ -116,10 +117,10 @@ export default function App() {
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
+  const { addToast } = useToast();
+
   // Plan-for-day shortcut state
   const [planningRecipe, setPlanningRecipe] = useState<Recipe | null>(null);
-  const [planToast, setPlanToast] = useState<string | null>(null);
-  const planToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep the detail modal in sync when a recipe is edited/rated/favorited
   useEffect(() => {
@@ -237,17 +238,18 @@ export default function App() {
 
   const handleSaveRecipe = useCallback((recipe: Recipe) => {
     saveRecipe(recipe);
-    // Keep shopping list in sync if this recipe is already selected
-    // (useShoppingSelections resolves by ID so edits auto-propagate via recipeMap)
-  }, [saveRecipe]);
+    addToast(`✅ ${recipe.name} saved`);
+  }, [saveRecipe, addToast]);
 
   const handleDeleteRecipe = useCallback((recipeId: string) => {
     if (!window.confirm('Are you sure you want to delete this recipe?')) return;
+    const name = recipes.find((r) => r.id === recipeId)?.name;
     deleteRecipe(recipeId);
     removeFromList(recipeId);
     setIsDetailOpen(false);
     setActiveRecipeDetail(null);
-  }, [deleteRecipe, removeFromList]);
+    if (name) addToast(`🗑️ ${name} deleted`);
+  }, [deleteRecipe, removeFromList, recipes, addToast]);
 
   const handleToggleCheck = useCallback((key: string) => {
     toggleCheck(key);
@@ -303,21 +305,20 @@ export default function App() {
       };
       setMealPlan(updated);
       setPlanningRecipe(null);
-      const msg = `Planned for ${dayLabel} ${mealLabel.toLowerCase()}`;
-      setPlanToast(msg);
-      if (planToastTimer.current) clearTimeout(planToastTimer.current);
-      planToastTimer.current = setTimeout(() => setPlanToast(null), 2800);
+      addToast(`📅 Planned for ${dayLabel} ${mealLabel.toLowerCase()}`);
     },
-    [planningRecipe, mealPlan, setMealPlan]
+    [planningRecipe, mealPlan, setMealPlan, addToast]
   );
 
   // ---- Meal planner ----
   const handleAddMealPlanToList = useCallback((planRecipes: Recipe[]) => {
-    planRecipes.forEach((recipe) => {
-      if (!selectedIds.has(recipe.id)) handleAddToList(recipe, 1);
-    });
+    const toAdd = planRecipes.filter((r) => !selectedIds.has(r.id));
+    toAdd.forEach((r) => addToList(r, 1));
+    if (toAdd.length > 0) {
+      addToast(`🛒 ${toAdd.length} recipe${toAdd.length !== 1 ? 's' : ''} added to shopping list`);
+    }
     setActiveTab('shopping');
-  }, [selectedIds, handleAddToList]);
+  }, [selectedIds, addToList, addToast]);
 
   // ---- Import / Export ----
   const handleExport = () => {
@@ -390,6 +391,7 @@ export default function App() {
                 handleRemoveFromList(r.id);
               } else {
                 handleAddToList(r, 1);
+                addToast(`✅ ${r.name} added to list`);
               }
             }}
             onViewDetail={handleViewDetail}
@@ -642,15 +644,6 @@ export default function App() {
           onChange={updateStorePreferences}
           onClose={() => setShowStoreSettings(false)}
         />
-      )}
-
-      {/* Plan toast */}
-      {planToast && (
-        <div className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-[70] pointer-events-none">
-          <div className="bg-stone-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-xl whitespace-nowrap animate-fade-in">
-            📅 {planToast}
-          </div>
-        </div>
       )}
 
       {/* Edit/Delete buttons accessible from detail modal */}
