@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { SelectedRecipe, ShoppingListItem, PantryItem, StorePreferences, ShoppingGroupingMode } from '../types';
-import { mergeIngredients, formatQuantity } from '../utils/ingredientMerger';
+import { mergeIngredients, formatQuantity, hasEmbeddedQuantity } from '../utils/ingredientMerger';
 import { GROCERY_SECTION_ORDER, GROCERY_SECTION_ICONS } from '../utils/grocerySections';
 import { isPantryStaple } from '../utils/pantryUtils';
 import {
@@ -132,8 +132,9 @@ export default function ShoppingList({
       if (!items || items.length === 0) continue;
       lines.push(`\n${section}`);
       for (const item of items) {
-        const qty = `${formatQuantity(item.quantity)}${item.unit ? ` ${item.unit}` : ''}`;
-        lines.push(`  [ ] ${qty} ${item.name}`);
+        const embedded = hasEmbeddedQuantity(item.name, item.unit);
+        const qty = embedded ? '' : `${formatQuantity(item.quantity)}${item.unit ? ` ${item.unit}` : ''}`;
+        lines.push(`  [ ] ${qty ? qty + ' ' : ''}${item.name}`);
       }
     }
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
@@ -166,9 +167,11 @@ export default function ShoppingList({
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className={`sl-item-qty font-bold text-gray-800 ${groceryMode ? 'text-xl' : 'text-base'}`}>
-              {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
-            </span>
+            {!hasEmbeddedQuantity(item.name, item.unit) && (
+              <span className={`sl-item-qty font-bold text-gray-800 ${groceryMode ? 'text-xl' : 'text-base'}`}>
+                {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
+              </span>
+            )}
             <span className={`sl-item-name text-gray-700 ${groceryMode ? 'text-xl' : 'text-base'}`}>
               {item.name}
             </span>
@@ -572,9 +575,11 @@ export default function ShoppingList({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className={`font-bold line-through text-stone-400 ${groceryMode ? 'text-xl' : 'text-base'}`}>
-                        {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
-                      </span>
+                      {!hasEmbeddedQuantity(item.name, item.unit) && (
+                        <span className={`font-bold line-through text-stone-400 ${groceryMode ? 'text-xl' : 'text-base'}`}>
+                          {formatQuantity(item.quantity)}{item.unit ? ` ${item.unit}` : ''}
+                        </span>
+                      )}
                       <span className={`line-through text-stone-400 ${groceryMode ? 'text-xl' : 'text-base'}`}>
                         {item.name}
                       </span>

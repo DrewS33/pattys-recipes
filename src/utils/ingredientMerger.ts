@@ -76,6 +76,21 @@ export function mergeIngredients(selectedRecipes: SelectedRecipe[]): ShoppingLis
 }
 
 // ============================================================
+// hasEmbeddedQuantity: returns true when the quantity/unit were
+// never parsed out of the name — e.g. name="¼ cup basil",
+// quantity=1, unit="". Detects Unicode fractions and ASCII
+// fractions (1/4, 3/4, …) at the start of the name string.
+// ============================================================
+export function hasEmbeddedQuantity(name: string, unit: string): boolean {
+  if (unit !== '') return false;
+  // Unicode vulgar fractions: ¼ ½ ¾ ⅓ ⅔ ⅛ ⅜ ⅝ ⅞
+  if (/^[¼½¾⅓⅔⅛⅜⅝⅞]/.test(name)) return true;
+  // ASCII fractions at start: "1/4 cup …"
+  if (/^\d+\/\d+/.test(name)) return true;
+  return false;
+}
+
+// ============================================================
 // formatQuantity: nicely formats a number for display
 // e.g. 0.5 -> "1/2", 0.25 -> "1/4", 1.5 -> "1 1/2"
 // ============================================================

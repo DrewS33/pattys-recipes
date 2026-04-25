@@ -85,6 +85,11 @@ const TRAILING_PREP_PHRASES = [
 const EMBEDDED_QTY_UNIT_RE =
   /^[\d\/\-\. ]+\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|c\.?|T\.?)\s+/i;
 
+// ── Regex: strip a leading Unicode fraction + unit from the name ─
+// Handles ingredients stored as e.g. name="¼ cup basil", quantity=1, unit="".
+const UNICODE_QTY_UNIT_RE =
+  /^[¼½¾⅓⅔⅛⅜⅝⅞]\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|c\.?|T\.?)\s+/i;
+
 // ── Regexes used in final sanitization ──────────────────────
 const RE_FRACTION  = /\d+\/\d+/g;      // 1/2, 3/4, 2/3
 const RE_DECIMAL   = /\d*\.\d+/g;      // .5, 1.5, 0.25
@@ -141,8 +146,9 @@ function stripSingleName(name: string): string {
 function stripPrepNotes(name: string): string {
   let s = name.trim();
 
-  // Strip embedded "1-1/2 cups" prefix
+  // Strip embedded "1-1/2 cups" / "¼ cup" prefix
   s = s.replace(EMBEDDED_QTY_UNIT_RE, '').trim();
+  s = s.replace(UNICODE_QTY_UNIT_RE, '').trim();
 
   // Strip parenthetical notes
   s = s.replace(/\s*\([^)]*\)/g, '').trim();
@@ -175,7 +181,9 @@ function stripPrepNotes(name: string): string {
 export function sanitizeFinalIngredientString(str: string): string[] {
   // 1. Strip embedded quantity+unit prefix before splitting
   //    e.g. "1-1/2 cups quartered mushrooms" → "quartered mushrooms"
+  //    e.g. "¼ cup basil" → "basil"
   let pre = str.replace(EMBEDDED_QTY_UNIT_RE, '').trim();
+  pre = pre.replace(UNICODE_QTY_UNIT_RE, '').trim();
 
   // 2. Strip ALL parenthetical content BEFORE comma-splitting.
   //    Critical: "fresh rosemary (, finely chopped)" has a comma INSIDE the
