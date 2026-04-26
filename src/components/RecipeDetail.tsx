@@ -190,11 +190,11 @@ export default function RecipeDetail({
             </div>
 
             {/* Top-right actions: Edit · Favorite · ··· More · ✕ */}
-            <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-start order-1 sm:order-2">
+            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start order-1 sm:order-2">
               {onEdit && (
                 <button
                   onClick={onEdit}
-                  className="h-9 px-2.5 rounded-full flex items-center gap-1.5 bg-white hover:bg-amber-50 border border-stone-200 text-stone-500 hover:text-stone-700 transition-all"
+                  className="h-9 px-2.5 rounded-full flex items-center gap-1.5 bg-white hover:bg-amber-50 border border-stone-300 text-stone-600 hover:text-stone-800 transition-all"
                   title="Edit recipe"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -210,7 +210,7 @@ export default function RecipeDetail({
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border
                   ${isFavorite
                     ? 'bg-yellow-400 hover:bg-yellow-300 border-yellow-300 text-yellow-900'
-                    : 'bg-white hover:bg-amber-50 border-stone-200 text-stone-400 hover:text-amber-500'}`}
+                    : 'bg-white hover:bg-amber-50 border-stone-300 text-stone-500 hover:text-amber-500'}`}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 {isFavorite ? (
@@ -231,7 +231,7 @@ export default function RecipeDetail({
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border
                     ${showMoreMenu
                       ? 'bg-amber-50 border-stone-300 text-stone-600'
-                      : 'bg-white hover:bg-amber-50 border-stone-200 text-stone-400 hover:text-stone-600'}`}
+                      : 'bg-white hover:bg-amber-50 border-stone-300 text-stone-500 hover:text-stone-700'}`}
                   title="More options"
                   aria-label="More options"
                 >
@@ -297,7 +297,7 @@ export default function RecipeDetail({
 
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-full bg-transparent hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all ml-0.5"
+                className="w-7 h-7 rounded-full bg-transparent hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all"
                 title="Close"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
@@ -395,13 +395,13 @@ export default function RecipeDetail({
                 (for {currentServings} serving{currentServings !== 1 ? 's' : ''})
               </span>
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-0">
               {recipe.ingredients.map((ing, idx) => {
                 const scaledQty = Math.round(ing.quantity * multiplier * 100) / 100;
                 return (
                   <li
                     key={idx}
-                    className="flex items-baseline gap-3 py-2 border-b border-gray-100 last:border-0"
+                    className="flex items-baseline gap-3 py-1.5 border-b border-gray-100 last:border-0"
                   >
                     <span className="text-base font-bold text-primary-600 min-w-[80px] text-right">
                       {formatQuantity(scaledQty)}{ing.unit ? ` ${ing.unit}` : ''}

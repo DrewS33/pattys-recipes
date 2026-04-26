@@ -67,8 +67,8 @@ export default function ServingAdjuster({
   };
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-gray-100">
-      <span className="text-sm font-semibold text-stone-500 mr-1">Servings</span>
+    <div className="flex items-center gap-2 py-2.5 border-b border-gray-100">
+      <span className="text-sm font-semibold text-stone-500 mr-0.5">Servings:</span>
       <button
         onClick={handleDecrement}
         disabled={currentServings <= 1}
