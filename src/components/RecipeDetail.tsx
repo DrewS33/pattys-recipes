@@ -20,6 +20,8 @@ interface RecipeDetailProps {
   onToggleFavorite: (id: string) => void;
   onRateRecipe: (recipeId: string, rating: number) => void;
   onShare?: (recipeId: string) => Promise<string | null>;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -60,11 +62,14 @@ export default function RecipeDetail({
   onToggleFavorite,
   onRateRecipe,
   onShare,
+  onEdit,
+  onDelete,
 }: RecipeDetailProps) {
   // Local multiplier state — initialized from selectedMultiplier or 1
   const [multiplier, setMultiplier] = useState(selectedMultiplier || 1);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
   const [shareFallbackUrl, setShareFallbackUrl] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleShare = useCallback(async () => {
     if (!recipe || !onShare) return;
@@ -105,9 +110,11 @@ export default function RecipeDetail({
     }
   }, [recipe, onShare]);
 
-  // Sync local multiplier when modal opens or selectedMultiplier changes
+  // Sync local multiplier when modal opens or selectedMultiplier changes.
+  // Also reset delete confirmation so it never persists across opens.
   useEffect(() => {
     setMultiplier(selectedMultiplier > 0 ? selectedMultiplier : 1);
+    setShowDeleteConfirm(false);
   }, [selectedMultiplier, isOpen]);
 
   // Close on Escape key
@@ -170,6 +177,16 @@ export default function RecipeDetail({
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Edit button */}
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className="h-11 px-3 rounded-full flex items-center gap-1.5 text-sm font-semibold bg-white hover:bg-amber-100 border border-amber-200 text-stone-600 transition-all"
+                  title="Edit recipe"
+                >
+                  ✏️ <span className="hidden sm:inline">Edit</span>
+                </button>
+              )}
               {/* Share button */}
               {onShare && (
                 <button
@@ -384,6 +401,36 @@ export default function RecipeDetail({
             </div>
           )}
         </div>
+
+        {/* Delete section — subtle, at the bottom, requires inline confirmation */}
+        {onDelete && (
+          <div className="px-6 pt-2 pb-2 border-t border-gray-100 no-print">
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-sm text-red-400 hover:text-red-600 transition-colors flex items-center gap-1.5"
+              >
+                🗑️ Delete this recipe
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-medium text-stone-600">Delete this recipe?</span>
+                <button
+                  onClick={onDelete}
+                  className="py-1.5 px-4 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Yes, delete
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="text-sm text-stone-500 hover:text-stone-700 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Footer action buttons */}
         <div className="px-6 pb-6 flex flex-col sm:flex-row gap-3">

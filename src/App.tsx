@@ -244,7 +244,6 @@ export default function App() {
   }, [saveRecipe, addToast]);
 
   const handleDeleteRecipe = useCallback((recipeId: string) => {
-    if (!window.confirm('Are you sure you want to delete this recipe?')) return;
     const name = recipes.find((r) => r.id === recipeId)?.name;
     deleteRecipe(recipeId);
     removeFromList(recipeId);
@@ -647,6 +646,13 @@ export default function App() {
         onToggleFavorite={handleToggleFavorite}
         onRateRecipe={handleRateRecipe}
         onShare={enableSharing}
+        onEdit={() => {
+          setIsDetailOpen(false);
+          if (activeRecipeDetail) handleOpenEdit(activeRecipeDetail);
+        }}
+        onDelete={() => {
+          if (activeRecipeDetail) handleDeleteRecipe(activeRecipeDetail.id);
+        }}
       />
 
       {/* Add / Edit Recipe Modal */}
@@ -680,26 +686,7 @@ export default function App() {
         />
       )}
 
-      {/* Edit/Delete buttons accessible from detail modal */}
-      {isDetailOpen && activeRecipeDetail && (
-        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] flex gap-3 no-print">
-          <button
-            onClick={() => {
-              setIsDetailOpen(false);
-              handleOpenEdit(activeRecipeDetail);
-            }}
-            className="py-2.5 px-5 bg-white text-gray-700 font-bold rounded-full shadow-xl text-sm border border-gray-200 hover:bg-gray-50 transition-colors"
-          >
-            ✏️ Edit Recipe
-          </button>
-          <button
-            onClick={() => handleDeleteRecipe(activeRecipeDetail.id)}
-            className="py-2.5 px-5 bg-white text-red-600 font-bold rounded-full shadow-xl text-sm border border-red-100 hover:bg-red-50 transition-colors"
-          >
-            🗑️ Delete
-          </button>
-        </div>
-      )}
+
     </div>
   );
 }
