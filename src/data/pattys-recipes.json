@@ -4759,36 +4759,36 @@
         "prepNote": "Chopped"
       },
       {
-        "name": "¾ Cup Orange Bell Pepper",
-        "quantity": 1,
-        "unit": "",
+        "name": "Orange Bell Pepper",
+        "quantity": 0.75,
+        "unit": "cup",
+        "grocerySection": "Spices & Seasonings",
+        "prepNote": "Finely Diced"
+      },
+      {
+        "name": "Red Onion",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Produce",
         "prepNote": "Finely Diced"
       },
       {
-        "name": "½ Cup Red Onion",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Produce",
-        "prepNote": "Finely Diced"
-      },
-      {
-        "name": "⅓ Cup Cilantro",
-        "quantity": 1,
-        "unit": "",
+        "name": "Cilantro",
+        "quantity": 0.3333333333333333,
+        "unit": "cup",
         "grocerySection": "Produce",
         "prepNote": "Chopped"
       },
       {
-        "name": "⅓ Cup Olive Oil",
-        "quantity": 1,
-        "unit": "",
+        "name": "Olive Oil",
+        "quantity": 0.3333333333333333,
+        "unit": "cup",
         "grocerySection": "Pantry"
       },
       {
-        "name": "¼ Cup Lime Juice",
-        "quantity": 1,
-        "unit": "",
+        "name": "Lime Juice",
+        "quantity": 0.25,
+        "unit": "cup",
         "grocerySection": "Produce"
       },
       {
@@ -4932,9 +4932,9 @@
         "grocerySection": "Meat & Seafood"
       },
       {
-        "name": "½ Cups Milk",
-        "quantity": 1,
-        "unit": "",
+        "name": "Milk",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Dairy & Eggs"
       },
       {
@@ -4987,15 +4987,15 @@
         "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ tsp Black Pepper",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Produce"
+        "name": "Black Pepper",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ tsp Cayenne Pepper",
-        "quantity": 1,
-        "unit": "",
+        "name": "Cayenne Pepper",
+        "quantity": 0.25,
+        "unit": "tsp",
         "grocerySection": "Spices & Seasonings"
       },
       {
@@ -5082,18 +5082,16 @@
         "prepNote": ""
       },
       {
-        "name": "½ tablespoons tomato paste",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Canned Goods",
-        "prepNote": ""
+        "name": "tomato paste",
+        "quantity": 0.5,
+        "unit": "tbsp",
+        "grocerySection": "Canned Goods"
       },
       {
-        "name": "¼ cup all-purpose flour",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "all-purpose flour",
+        "quantity": 0.25,
+        "unit": "cup",
+        "grocerySection": "Pantry"
       },
       {
         "name": "dry red wine",
@@ -5124,18 +5122,16 @@
         "prepNote": ""
       },
       {
-        "name": "½ teaspoon dried thyme",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Spices & Seasonings",
-        "prepNote": ""
+        "name": "dried thyme",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "½ teaspoons sugar",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "sugar",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Pantry"
       },
       {
         "name": "large carrots, (peeled and cut into 1-inch chunks on a diagonal)",
@@ -5334,11 +5330,11 @@
         "prepNote": ""
       },
       {
-        "name": "½ cup mayonnaise (full-fat )",
-        "quantity": 1,
-        "unit": "",
+        "name": "mayonnaise",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Pantry",
-        "prepNote": ""
+        "prepNote": "full-fat"
       },
       {
         "name": "apple cider vinegar",
@@ -5348,32 +5344,28 @@
         "prepNote": ""
       },
       {
-        "name": "½ teaspoon onion powder",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Spices & Seasonings",
-        "prepNote": ""
+        "name": "onion powder",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ teaspoon garlic powder",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Spices & Seasonings",
-        "prepNote": ""
+        "name": "garlic powder",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ teaspoon kosher salt",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Spices & Seasonings",
-        "prepNote": ""
+        "name": "kosher salt",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ teaspoon black pepper",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Spices & Seasonings",
-        "prepNote": ""
+        "name": "black pepper",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       }
     ],
     "instructions": [
@@ -5427,9 +5419,9 @@
         "grocerySection": "Pantry"
       },
       {
-        "name": "¾ cup grated Parmesan cheese",
-        "quantity": 1,
-        "unit": "",
+        "name": "grated Parmesan cheese",
+        "quantity": 0.75,
+        "unit": "cup",
         "grocerySection": "Dairy & Eggs"
       },
       {
@@ -5440,35 +5432,35 @@
         "prepNote": "or as needed"
       },
       {
-        "name": "½ cup olive oil",
-        "quantity": 1,
-        "unit": "",
+        "name": "olive oil",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Pantry",
         "prepNote": "for frying"
       },
       {
-        "name": "½ cup prepared tomato sauce",
-        "quantity": 1,
-        "unit": "",
+        "name": "prepared tomato sauce",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Canned Goods"
       },
       {
-        "name": "¼ cup fresh mozzarella cheese",
-        "quantity": 1,
-        "unit": "",
+        "name": "fresh mozzarella cheese",
+        "quantity": 0.25,
+        "unit": "cup",
         "grocerySection": "Dairy & Eggs",
         "prepNote": "cut into small cubes"
       },
       {
-        "name": "¼ cup chopped fresh basil",
-        "quantity": 1,
-        "unit": "",
+        "name": "chopped fresh basil",
+        "quantity": 0.25,
+        "unit": "cup",
         "grocerySection": "Produce"
       },
       {
-        "name": "½ cup grated provolone cheese",
-        "quantity": 1,
-        "unit": "",
+        "name": "grated provolone cheese",
+        "quantity": 0.5,
+        "unit": "cup",
         "grocerySection": "Dairy & Eggs"
       },
       {
@@ -6422,11 +6414,10 @@
     "favorite": false,
     "ingredients": [
       {
-        "name": "1-½ lbs. sirloin tips",
+        "name": "sirloin tips",
         "quantity": 1.5,
-        "unit": "lbs",
-        "grocerySection": "Meat & Seafood",
-        "prepNote": ""
+        "unit": "lb",
+        "grocerySection": "Meat & Seafood"
       },
       {
         "name": "flour",
@@ -6457,16 +6448,39 @@
         "prepNote": ""
       },
       {
-        "name": "½ teaspoon EACH: salt, garlic powder, onion powder, chili powder, paprika",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": "EACH: salt, garlic powder, onion powder, chili powder, paprika"
+        "name": "salt",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
-        "name": "¼ cup dry red wine (optional)",
+        "name": "garlic powder",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
+      },
+      {
+        "name": "onion powder",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
+      },
+      {
+        "name": "chili powder",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
+      },
+      {
+        "name": "paprika",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
+      },
+      {
+        "name": "dry red wine",
         "quantity": 0.25,
-        "unit": "c.",
+        "unit": "cup",
         "grocerySection": "Pantry",
         "prepNote": "Start of the Gravy"
       },
@@ -6506,18 +6520,22 @@
         "prepNote": ""
       },
       {
-        "name": "1-½ teaspoons Worcestershire sauce",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "Worcestershire sauce",
+        "quantity": 1.5,
+        "unit": "tsp",
+        "grocerySection": "Pantry"
       },
       {
-        "name": "¼ teaspoon EACH: dried thyme, dried rosemary",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "dried thyme",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
+      },
+      {
+        "name": "dried rosemary",
+        "quantity": 0.25,
+        "unit": "tsp",
+        "grocerySection": "Spices & Seasonings"
       },
       {
         "name": "onion powder",
@@ -6527,11 +6545,10 @@
         "prepNote": ""
       },
       {
-        "name": "½ teaspoon garlic powder",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "garlic powder",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "grocerySection": "Pantry"
       },
       {
         "name": "corn starch + 1/4 cup cold water",
@@ -6669,11 +6686,10 @@
         "prepNote": ""
       },
       {
-        "name": "1-1/2 cups quartered fresh mushrooms",
+        "name": "quartered fresh mushrooms",
         "quantity": 1.5,
-        "unit": "",
-        "grocerySection": "Produce",
-        "prepNote": ""
+        "unit": "cup",
+        "grocerySection": "Produce"
       },
       {
         "name": "Burgundy wine or beef broth",
@@ -6792,11 +6808,10 @@
         "prepNote": ""
       },
       {
-        "name": "½ cup avocado oil",
-        "quantity": 1,
-        "unit": "",
-        "grocerySection": "Pantry",
-        "prepNote": ""
+        "name": "avocado oil",
+        "quantity": 0.5,
+        "unit": "cup",
+        "grocerySection": "Pantry"
       },
       {
         "name": "coarse salt and freshly cracked pepper to taste",

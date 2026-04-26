@@ -23,6 +23,7 @@ import {
 } from '../lib/dbMapper';
 import { seedDefaultRecipes, ensureDefaultRecipes } from '../lib/seedRecipes';
 import { MIGRATION_KEY } from '../lib/migration';
+import { repairEmbeddedIngredients } from '../lib/repairIngredients';
 
 // Checked once per browser session so we don't run on every hot-reload / tab focus.
 const SESSION_DEFAULTS_CHECKED = 'patty-defaults-checked';
@@ -79,10 +80,13 @@ export function useRecipes(): UseRecipesReturn {
         // migrationHandled is null → migration check still in progress; wait.
         setRecipes([]);
       } else {
-        // Existing account — check once per session for missing defaults.
+        // Existing account — check once per session for missing defaults and bad ingredient data.
         if (!sessionStorage.getItem(SESSION_DEFAULTS_CHECKED)) {
           sessionStorage.setItem(SESSION_DEFAULTS_CHECKED, '1');
-          const added = await ensureDefaultRecipes(userId);
+          const [added] = await Promise.all([
+            ensureDefaultRecipes(userId),
+            repairEmbeddedIngredients(userId),
+          ]);
           if (added) {
             // Re-fetch so the newly added defaults appear in the list.
             return loadRecipes(userId);
