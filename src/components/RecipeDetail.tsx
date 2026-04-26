@@ -190,7 +190,7 @@ export default function RecipeDetail({
             </div>
 
             {/* Top-right actions: Edit · Favorite · ··· More · ✕ */}
-            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start order-1 sm:order-2 sm:pt-1">
+            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start order-1 sm:order-2 sm:pt-1.5">
               {onEdit && (
                 <button
                   onClick={onEdit}
@@ -225,7 +225,7 @@ export default function RecipeDetail({
               </button>
 
               {/* More menu (⋯) */}
-              <div className="relative" ref={moreMenuRef}>
+              <div className="relative w-9" ref={moreMenuRef}>
                 <button
                   onClick={() => setShowMoreMenu(v => !v)}
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border
