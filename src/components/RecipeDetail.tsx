@@ -180,50 +180,65 @@ export default function RecipeDetail({
 
         {/* Header */}
         <div className="bg-amber-50 border-b border-amber-200 p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-tight mb-1">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+            {/* Title + description — full width on mobile, flex-1 on sm+ */}
+            <div className="flex-1 min-w-0 order-2 sm:order-1">
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-snug mb-1">
                 {recipe.name}
               </h2>
               <p className="text-stone-500 text-base leading-relaxed">{recipe.description}</p>
             </div>
 
             {/* Top-right actions: Edit · Favorite · ··· More · ✕ */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-start order-1 sm:order-2">
               {onEdit && (
                 <button
                   onClick={onEdit}
-                  className="h-11 px-3 rounded-full flex items-center gap-1.5 text-sm font-semibold bg-white hover:bg-amber-100 border border-amber-200 text-stone-600 transition-all"
+                  className="h-9 px-2.5 rounded-full flex items-center gap-1.5 bg-white hover:bg-amber-50 border border-stone-200 text-stone-500 hover:text-stone-700 transition-all"
                   title="Edit recipe"
                 >
-                  ✏️ <span className="hidden sm:inline">Edit</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  <span className="hidden sm:inline text-sm font-medium">Edit</span>
                 </button>
               )}
 
               <button
                 onClick={() => onToggleFavorite(recipe.id)}
-                className={`w-11 h-11 rounded-full flex items-center justify-center text-xl transition-all
-                  ${isFavorite ? 'bg-yellow-400 hover:bg-yellow-300' : 'bg-white hover:bg-amber-100 border border-amber-200'}`}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border
+                  ${isFavorite
+                    ? 'bg-yellow-400 hover:bg-yellow-300 border-yellow-300 text-yellow-900'
+                    : 'bg-white hover:bg-amber-50 border-stone-200 text-stone-400 hover:text-amber-500'}`}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
-                {isFavorite ? '⭐' : '☆'}
+                {isFavorite ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                )}
               </button>
 
               {/* More menu (⋯) */}
               <div className="relative" ref={moreMenuRef}>
                 <button
                   onClick={() => setShowMoreMenu(v => !v)}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border
                     ${showMoreMenu
-                      ? 'bg-amber-100 border-amber-300 text-stone-700'
-                      : 'bg-white hover:bg-amber-100 border-amber-200 text-stone-600'}`}
+                      ? 'bg-amber-50 border-stone-300 text-stone-600'
+                      : 'bg-white hover:bg-amber-50 border-stone-200 text-stone-400 hover:text-stone-600'}`}
                   title="More options"
                   aria-label="More options"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <circle cx="5" cy="12" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="19" cy="12" r="2" />
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="5" cy="12" r="1.75" />
+                    <circle cx="12" cy="12" r="1.75" />
+                    <circle cx="19" cy="12" r="1.75" />
                   </svg>
                 </button>
 
@@ -282,10 +297,13 @@ export default function RecipeDetail({
 
               <button
                 onClick={onClose}
-                className="w-11 h-11 rounded-full bg-white hover:bg-amber-100 border border-amber-200 flex items-center justify-center text-lg text-stone-600 transition-all"
+                className="w-7 h-7 rounded-full bg-transparent hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all ml-0.5"
                 title="Close"
               >
-                ✕
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
               </button>
             </div>
           </div>
@@ -342,7 +360,7 @@ export default function RecipeDetail({
         </div>
 
         {/* Info bar */}
-        <div className="bg-white px-6 py-3 grid grid-cols-4 gap-2 border-b border-amber-100">
+        <div className="bg-white px-6 py-3 grid grid-cols-4 gap-2 border-b border-stone-200">
           <div className="text-center">
             <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Prep</p>
             <p className="text-sm sm:text-base font-bold text-gray-800">{formatTime(recipe.prepTimeMinutes)}</p>

@@ -67,28 +67,26 @@ export default function ServingAdjuster({
   };
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-      <span className="text-sm font-semibold text-stone-500">Servings</span>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleDecrement}
-          disabled={currentServings <= 1}
-          className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 disabled:opacity-40 transition-colors"
-          title="Decrease servings"
-        >
-          −
-        </button>
-        <span className="text-base font-bold text-stone-700 min-w-[2rem] text-center">
-          {currentServings}
-        </span>
-        <button
-          onClick={handleIncrement}
-          className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 transition-colors"
-          title="Increase servings"
-        >
-          +
-        </button>
-      </div>
+    <div className="flex items-center gap-3 py-2.5 border-b border-gray-100">
+      <span className="text-sm font-semibold text-stone-500 mr-1">Servings</span>
+      <button
+        onClick={handleDecrement}
+        disabled={currentServings <= 1}
+        className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 disabled:opacity-40 transition-colors"
+        title="Decrease servings"
+      >
+        −
+      </button>
+      <span className="text-base font-bold text-stone-700 min-w-[1.75rem] text-center">
+        {currentServings}
+      </span>
+      <button
+        onClick={handleIncrement}
+        className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 transition-colors"
+        title="Increase servings"
+      >
+        +
+      </button>
     </div>
   );
 }
