@@ -180,7 +180,7 @@ export default function RecipeDetail({
 
         {/* Header */}
         <div className="bg-amber-50 border-b border-amber-200 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4">
             {/* Title + description — full width on mobile, flex-1 on sm+ */}
             <div className="flex-1 min-w-0 order-2 sm:order-1">
               <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-snug mb-1">
@@ -190,7 +190,7 @@ export default function RecipeDetail({
             </div>
 
             {/* Top-right actions: Edit · Favorite · ··· More · ✕ */}
-            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start order-1 sm:order-2">
+            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start order-1 sm:order-2 sm:pt-1">
               {onEdit && (
                 <button
                   onClick={onEdit}
@@ -297,7 +297,7 @@ export default function RecipeDetail({
 
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-full bg-transparent hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all"
+                className="w-9 h-9 rounded-full bg-transparent hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all"
                 title="Close"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
