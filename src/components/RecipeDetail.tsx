@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Recipe } from '../types';
-import StarRating from './StarRating';
 import { formatQuantity } from '../utils/ingredientMerger';
 import ServingAdjuster from './ServingAdjuster';
 
@@ -60,16 +59,17 @@ export default function RecipeDetail({
   onRemoveFromList,
   isFavorite,
   onToggleFavorite,
-  onRateRecipe,
+  onRateRecipe: _onRateRecipe,
   onShare,
   onEdit,
   onDelete,
 }: RecipeDetailProps) {
-  // Local multiplier state — initialized from selectedMultiplier or 1
   const [multiplier, setMultiplier] = useState(selectedMultiplier || 1);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
   const [shareFallbackUrl, setShareFallbackUrl] = useState<string | null>(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const handleShare = useCallback(async () => {
     if (!recipe || !onShare) return;
@@ -78,7 +78,6 @@ export default function RecipeDetail({
 
     const shareId = await onShare(recipe.id);
     if (!shareId) {
-      // enableSharing failed — likely the SQL columns haven't been added yet
       setShareStatus('error');
       setTimeout(() => setShareStatus('idle'), 3000);
       return;
@@ -92,7 +91,6 @@ export default function RecipeDetail({
         setShareStatus('copied');
         setTimeout(() => setShareStatus('idle'), 2000);
       } catch {
-        // User dismissed the native share sheet — show URL as manual fallback
         setShareFallbackUrl(url);
         setShareStatus('idle');
       }
@@ -104,23 +102,30 @@ export default function RecipeDetail({
       setShareStatus('copied');
       setTimeout(() => setShareStatus('idle'), 2000);
     } catch {
-      // Clipboard not available — show URL so user can copy manually
       setShareFallbackUrl(url);
       setShareStatus('idle');
     }
   }, [recipe, onShare]);
 
-  // Sync local multiplier when modal opens or selectedMultiplier changes.
-  // Also reset delete confirmation so it never persists across opens.
+  // Reset state when modal opens or closes
   useEffect(() => {
     setMultiplier(selectedMultiplier > 0 ? selectedMultiplier : 1);
+    setShowMoreMenu(false);
     setShowDeleteConfirm(false);
   }, [selectedMultiplier, isOpen]);
 
-  // Close on Escape key
+  // Reset delete confirm when More menu closes
+  useEffect(() => {
+    if (!showMoreMenu) setShowDeleteConfirm(false);
+  }, [showMoreMenu]);
+
+  // Escape key — close More menu first, then modal
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showMoreMenu) { setShowMoreMenu(false); return; }
+        onClose();
+      }
     };
     if (isOpen) {
       document.addEventListener('keydown', handleKey);
@@ -130,7 +135,19 @@ export default function RecipeDetail({
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showMoreMenu]);
+
+  // Close More menu on outside click
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMoreMenu]);
 
   if (!isOpen || !recipe) return null;
 
@@ -150,11 +167,11 @@ export default function RecipeDetail({
       className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      {/* Modal panel — full-screen sheet on mobile, centered card on desktop */}
+      {/* Modal panel */}
       <div className="bg-white w-full max-w-3xl sm:rounded-2xl shadow-2xl sm:my-4 overflow-hidden
                       rounded-t-2xl max-h-[92vh] overflow-y-auto">
 
-        {/* Photo banner (if available) */}
+        {/* Photo banner */}
         {recipe.image && (
           <div className="h-48 overflow-hidden">
             <img src={recipe.image} alt={recipe.name} className="w-full h-full object-cover" />
@@ -164,20 +181,15 @@ export default function RecipeDetail({
         {/* Header */}
         <div className="bg-amber-50 border-b border-amber-200 p-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-tight mb-1">{recipe.name}</h2>
-              <div className="mb-2">
-                <StarRating
-                  rating={recipe.rating}
-                  size="lg"
-                  onChange={(r) => onRateRecipe(recipe.id, r)}
-                />
-              </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-800 leading-tight mb-1">
+                {recipe.name}
+              </h2>
               <p className="text-stone-500 text-base leading-relaxed">{recipe.description}</p>
             </div>
 
+            {/* Top-right actions: Edit · Favorite · ··· More · ✕ */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Edit button */}
               {onEdit && (
                 <button
                   onClick={onEdit}
@@ -187,39 +199,87 @@ export default function RecipeDetail({
                   ✏️ <span className="hidden sm:inline">Edit</span>
                 </button>
               )}
-              {/* Share button */}
-              {onShare && (
-                <button
-                  onClick={handleShare}
-                  disabled={shareStatus === 'copying'}
-                  className={`
-                    h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all border px-3 gap-1.5
-                    ${shareStatus === 'copied'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : shareStatus === 'error'
-                      ? 'bg-red-50 text-red-600 border-red-200'
-                      : 'bg-white hover:bg-amber-100 border-amber-200 text-stone-600'}
-                  `}
-                  title="Share recipe"
-                >
-                  {shareStatus === 'copied' ? '✓ Copied!'
-                    : shareStatus === 'copying' ? '…'
-                    : shareStatus === 'error' ? '⚠️ Setup needed'
-                    : '🔗 Share'}
-                </button>
-              )}
-              {/* Favorite button */}
+
               <button
                 onClick={() => onToggleFavorite(recipe.id)}
-                className={`
-                  w-11 h-11 rounded-full flex items-center justify-center text-xl transition-all
-                  ${isFavorite ? 'bg-yellow-400 hover:bg-yellow-300' : 'bg-white hover:bg-amber-100 border border-amber-200'}
-                `}
+                className={`w-11 h-11 rounded-full flex items-center justify-center text-xl transition-all
+                  ${isFavorite ? 'bg-yellow-400 hover:bg-yellow-300' : 'bg-white hover:bg-amber-100 border border-amber-200'}`}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 {isFavorite ? '⭐' : '☆'}
               </button>
-              {/* Close button */}
+
+              {/* More menu (⋯) */}
+              <div className="relative" ref={moreMenuRef}>
+                <button
+                  onClick={() => setShowMoreMenu(v => !v)}
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border
+                    ${showMoreMenu
+                      ? 'bg-amber-100 border-amber-300 text-stone-700'
+                      : 'bg-white hover:bg-amber-100 border-amber-200 text-stone-600'}`}
+                  title="More options"
+                  aria-label="More options"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+
+                {showMoreMenu && (
+                  <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[172px] z-10">
+                    {showDeleteConfirm ? (
+                      <div className="px-3 py-2.5">
+                        <p className="text-sm font-medium text-stone-600 mb-2">Delete this recipe?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { onDelete?.(); setShowMoreMenu(false); }}
+                            className="flex-1 py-1.5 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 py-1.5 bg-gray-100 text-stone-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {onShare && (
+                          <button
+                            onClick={() => { setShowMoreMenu(false); handleShare(); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-amber-50 flex items-center gap-2.5 transition-colors"
+                          >
+                            🔗 Share Recipe
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { setShowMoreMenu(false); handlePrint(); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-amber-50 flex items-center gap-2.5 transition-colors"
+                        >
+                          🖨️ Print Recipe
+                        </button>
+                        {onDelete && (
+                          <>
+                            <hr className="my-1 border-gray-100" />
+                            <button
+                              onClick={() => setShowDeleteConfirm(true)}
+                              className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-50 hover:text-red-600 flex items-center gap-2.5 transition-colors"
+                            >
+                              🗑️ Delete Recipe
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={onClose}
                 className="w-11 h-11 rounded-full bg-white hover:bg-amber-100 border border-amber-200 flex items-center justify-center text-lg text-stone-600 transition-all"
@@ -230,7 +290,15 @@ export default function RecipeDetail({
             </div>
           </div>
 
-          {/* Share fallback — shown when clipboard is unavailable */}
+          {/* Share status feedback (appears inline after share action) */}
+          {shareStatus === 'copied' && (
+            <p className="mt-2 text-xs text-emerald-600 font-medium">✓ Link copied to clipboard!</p>
+          )}
+          {shareStatus === 'error' && (
+            <p className="mt-2 text-xs text-red-400 font-medium">⚠️ Sharing not available</p>
+          )}
+
+          {/* Share fallback URL input */}
           {shareFallbackUrl && (
             <div className="mt-3 flex items-center gap-2 bg-white border border-amber-200 rounded-xl px-3 py-2">
               <span className="text-xs text-stone-500 shrink-0">Share link:</span>
@@ -241,7 +309,12 @@ export default function RecipeDetail({
                 className="flex-1 text-xs text-primary-700 bg-transparent outline-none truncate"
               />
               <button
-                onClick={() => { navigator.clipboard.writeText(shareFallbackUrl).catch(() => {}); setShareFallbackUrl(null); setShareStatus('copied'); setTimeout(() => setShareStatus('idle'), 2000); }}
+                onClick={() => {
+                  navigator.clipboard.writeText(shareFallbackUrl).catch(() => {});
+                  setShareFallbackUrl(null);
+                  setShareStatus('copied');
+                  setTimeout(() => setShareStatus('idle'), 2000);
+                }}
                 className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0"
               >
                 Copy
@@ -290,7 +363,6 @@ export default function RecipeDetail({
 
         {/* Body */}
         <div className="p-6 space-y-6">
-          {/* Serving adjuster */}
           <ServingAdjuster
             defaultServings={recipe.defaultServings}
             multiplier={multiplier}
@@ -402,59 +474,23 @@ export default function RecipeDetail({
           )}
         </div>
 
-        {/* Delete section — subtle, at the bottom, requires inline confirmation */}
-        {onDelete && (
-          <div className="px-6 pt-2 pb-2 border-t border-gray-100 no-print">
-            {!showDeleteConfirm ? (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-sm text-red-400 hover:text-red-600 transition-colors flex items-center gap-1.5"
-              >
-                🗑️ Delete this recipe
-              </button>
-            ) : (
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm font-medium text-stone-600">Delete this recipe?</span>
-                <button
-                  onClick={onDelete}
-                  className="py-1.5 px-4 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  Yes, delete
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="text-sm text-stone-500 hover:text-stone-700 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Footer action buttons */}
-        <div className="px-6 pb-6 flex flex-col sm:flex-row gap-3">
+        {/* Footer action */}
+        <div className="px-6 pb-6 pt-2">
           {isSelected ? (
             <button
               onClick={() => onRemoveFromList(recipe.id)}
-              className="flex-1 py-4 sm:py-3 px-6 bg-red-500 text-white font-bold rounded-xl text-base hover:bg-red-600 transition-colors shadow-md active:scale-[0.98]"
+              className="w-full py-4 sm:py-3 px-6 bg-red-500 text-white font-bold rounded-xl text-base hover:bg-red-600 transition-colors shadow-md active:scale-[0.98]"
             >
               ✕ Remove from Shopping List
             </button>
           ) : (
             <button
               onClick={() => onAddToList(recipe, multiplier)}
-              className="flex-1 py-4 sm:py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md active:scale-[0.98]"
+              className="w-full py-4 sm:py-3 px-6 bg-primary-500 text-white font-bold rounded-xl text-base hover:bg-primary-600 transition-colors shadow-md active:scale-[0.98]"
             >
               🛒 Add to Shopping List
             </button>
           )}
-          <button
-            onClick={handlePrint}
-            className="py-4 sm:py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl text-base hover:bg-gray-200 transition-colors active:scale-[0.98]"
-          >
-            🖨️ Print Recipe
-          </button>
         </div>
       </div>
     </div>

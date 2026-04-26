@@ -67,23 +67,23 @@ export default function ServingAdjuster({
   };
 
   return (
-    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-center justify-between">
-      <span className="text-sm font-semibold text-stone-600">Servings</span>
+    <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
+      <span className="text-sm font-semibold text-stone-500">Servings</span>
       <div className="flex items-center gap-3">
         <button
           onClick={handleDecrement}
           disabled={currentServings <= 1}
-          className="w-9 h-9 rounded-full bg-white border border-amber-200 text-stone-600 font-bold text-lg flex items-center justify-center hover:bg-amber-100 disabled:opacity-40 transition-colors"
+          className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 disabled:opacity-40 transition-colors"
           title="Decrease servings"
         >
           −
         </button>
-        <span className="text-lg font-bold text-stone-800 min-w-[2rem] text-center">
+        <span className="text-base font-bold text-stone-700 min-w-[2rem] text-center">
           {currentServings}
         </span>
         <button
           onClick={handleIncrement}
-          className="w-9 h-9 rounded-full bg-white border border-amber-200 text-stone-600 font-bold text-lg flex items-center justify-center hover:bg-amber-100 transition-colors"
+          className="w-9 h-9 rounded-full border border-stone-200 text-stone-500 font-bold text-lg flex items-center justify-center hover:bg-stone-100 transition-colors"
           title="Increase servings"
         >
           +
