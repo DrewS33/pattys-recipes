@@ -8,7 +8,7 @@ import {
   GrocerySection,
 } from '../types';
 import { importRecipeFromUrl } from '../utils/urlImporter';
-import { parseRecipeText } from '../utils/recipeTextParser';
+import { parseRecipeText, parseIngredientLine } from '../utils/recipeTextParser';
 
 // ============================================================
 // AddEditRecipe: modal form for creating or editing a recipe
@@ -364,6 +364,34 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
 
   const removeIngredient = (index: number) => {
     setField('ingredients', form.ingredients.filter((_, i) => i !== index));
+  };
+
+  // When the user tabs out of the name field, auto-parse an embedded
+  // quantity+unit prefix (e.g. "¼ cup basil" → qty:0.25 unit:"cup" name:"basil").
+  // Only fires when the parsed name differs from the raw input, meaning
+  // something was actually stripped out.
+  const handleIngredientNameBlur = (index: number) => {
+    const ing = form.ingredients[index];
+    if (!ing.name.trim()) return;
+    const parsed = parseIngredientLine(ing.name);
+    if (!parsed || parsed.name === ing.name) return;
+    setField(
+      'ingredients',
+      form.ingredients.map((item, i) =>
+        i !== index
+          ? item
+          : {
+              ...item,
+              name: parsed.name,
+              quantity: parsed.quantity,
+              unit: parsed.unit,
+              prepNote: parsed.prepNote ?? item.prepNote,
+              // Only replace the section if it is still the blank default.
+              grocerySection:
+                item.grocerySection === 'Pantry' ? parsed.grocerySection : item.grocerySection,
+            }
+      )
+    );
   };
 
   // ---- Instructions ----
@@ -759,6 +787,7 @@ export default function AddEditRecipe({ recipe, isOpen, onClose, onSave }: AddEd
                         type="text"
                         value={ing.name}
                         onChange={(e) => updateIngredient(idx, 'name', e.target.value)}
+                        onBlur={() => handleIngredientNameBlur(idx)}
                         placeholder="Ingredient name *"
                         className={inputCls}
                       />

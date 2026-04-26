@@ -15,6 +15,12 @@ export interface ImportedRecipe {
   image?: string;
 }
 
+const UNICODE_FRACS: Record<string, number> = {
+  '¼': 0.25, '½': 0.5, '¾': 0.75,
+  '⅓': 1 / 3, '⅔': 2 / 3,
+  '⅛': 0.125, '⅜': 3 / 8, '⅝': 5 / 8, '⅞': 7 / 8,
+};
+
 const UNITS = [
   'tablespoons', 'tablespoon', 'tbsp', 'teaspoons', 'teaspoon', 'tsp',
   'cups', 'cup', 'pounds', 'pound', 'lbs', 'lb', 'ounces', 'ounce', 'oz',
@@ -42,27 +48,47 @@ function parseServings(yield_: unknown): number {
 function parseIngredientStr(str: string): { name: string; quantity: number; unit: string } {
   str = str.trim();
 
-  // Match a leading number: "1 1/2", "1/2", "2", "1.5"
-  const numMatch = str.match(/^((\d+\s+)?\d+\/\d+|\d+\.?\d*)\s*/);
   let quantity = 1;
   let rest = str;
 
-  if (numMatch) {
-    const numStr = numMatch[1].trim();
-    if (numStr.includes('/')) {
-      const parts = numStr.split(/\s+/);
-      if (parts.length === 2) {
-        const [whole, frac] = parts;
-        const [n, d] = frac.split('/');
-        quantity = parseInt(whole) + parseInt(n) / parseInt(d);
-      } else {
-        const [n, d] = numStr.split('/');
-        quantity = parseInt(n) / parseInt(d);
-      }
+  // Unicode fraction alone: "¼ cup basil"
+  if (str[0] && UNICODE_FRACS[str[0]] !== undefined) {
+    quantity = UNICODE_FRACS[str[0]];
+    rest = str.slice(1).trimStart();
+  // Whole + hyphenated Unicode: "1-½ cups"
+  } else {
+    const wuf = str.match(/^(\d+)-([¼½¾⅓⅔⅛⅜⅝⅞])\s*/);
+    if (wuf) {
+      quantity = parseInt(wuf[1]) + (UNICODE_FRACS[wuf[2]] ?? 0);
+      rest = str.slice(wuf[0].length);
+    // Whole + hyphenated ASCII fraction: "1-1/2 cups"
     } else {
-      quantity = parseFloat(numStr);
+      const haf = str.match(/^(\d+)-(\d+)\/(\d+)\s+/);
+      if (haf) {
+        quantity = parseInt(haf[1]) + parseInt(haf[2]) / parseInt(haf[3]);
+        rest = str.slice(haf[0].length);
+      // Standard ASCII: "1 1/2", "1/2", "2", "1.5"
+      } else {
+        const numMatch = str.match(/^((\d+\s+)?\d+\/\d+|\d+\.?\d*)\s*/);
+        if (numMatch) {
+          const numStr = numMatch[1].trim();
+          if (numStr.includes('/')) {
+            const parts = numStr.split(/\s+/);
+            if (parts.length === 2) {
+              const [whole, frac] = parts;
+              const [n, d] = frac.split('/');
+              quantity = parseInt(whole) + parseInt(n) / parseInt(d);
+            } else {
+              const [n, d] = numStr.split('/');
+              quantity = parseInt(n) / parseInt(d);
+            }
+          } else {
+            quantity = parseFloat(numStr);
+          }
+          rest = str.slice(numMatch[0].length);
+        }
+      }
     }
-    rest = str.slice(numMatch[0].length);
   }
 
   // Match unit

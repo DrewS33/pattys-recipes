@@ -56,6 +56,48 @@ function parseQuantity(str: string): number {
   return isNaN(n) ? 1 : n;
 }
 
+// Unicode vulgar fraction characters and their decimal values.
+const UNICODE_FRACS: Record<string, number> = {
+  '¼': 0.25, '½': 0.5, '¾': 0.75,
+  '⅓': 1 / 3, '⅔': 2 / 3,
+  '⅛': 0.125, '⅜': 3 / 8, '⅝': 5 / 8, '⅞': 7 / 8,
+};
+
+/**
+ * Parse a leading quantity from the start of a string, returning the numeric
+ * value and the remaining string after the quantity (and any trailing space).
+ * Handles: Unicode fractions, whole+Unicode ("1-½"), whole+ASCII-fraction
+ * ("1-1/2"), and standard ASCII ("1 1/2", "1/2", "2", "1.5").
+ * Returns null if no leading quantity is found.
+ */
+export function parseLeadingQuantity(s: string): { qty: number; rest: string } | null {
+  // Unicode fraction alone: "¼ cup basil"
+  if (s[0] && UNICODE_FRACS[s[0]] !== undefined) {
+    return { qty: UNICODE_FRACS[s[0]], rest: s.slice(1).trimStart() };
+  }
+
+  // Whole + hyphenated Unicode fraction: "1-½ cups"
+  const wuf = s.match(/^(\d+)-([¼½¾⅓⅔⅛⅜⅝⅞])\s*/);
+  if (wuf) {
+    return { qty: parseInt(wuf[1]) + (UNICODE_FRACS[wuf[2]] ?? 0), rest: s.slice(wuf[0].length) };
+  }
+
+  // Whole + hyphenated ASCII fraction: "1-1/2 cups"
+  const haf = s.match(/^(\d+)-(\d+)\/(\d+)\s+/);
+  if (haf) {
+    return { qty: parseInt(haf[1]) + parseInt(haf[2]) / parseInt(haf[3]), rest: s.slice(haf[0].length) };
+  }
+
+  // Standard ASCII: "1 1/2", "1/2", "2", "1.5"
+  const QTY_RE = /^((?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?))\s*/;
+  const m = s.match(QTY_RE);
+  if (m) {
+    return { qty: parseQuantity(m[1]), rest: s.slice(m[0].length) };
+  }
+
+  return null;
+}
+
 // ── Unit lookup ───────────────────────────────────────────────
 
 // Normalized unit spellings (long form → short form)
@@ -174,15 +216,15 @@ export function parseIngredientLine(raw: string): Ingredient | null {
   if (!line || line.length < 2) return null;
 
   // --- Quantity ---
-  // Matches: "1 1/2", "1/2", "2.5", "3", or empty
-  const QTY_RE = /^((?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?))\s*/;
+  // Handles Unicode fractions (¼ ½ ¾ …), hyphenated mixed numbers (1-½, 1-1/2),
+  // and standard ASCII (1 1/2, 1/2, 2.5, 3).
   let rest = line;
   let quantity = 1;
 
-  const qtyMatch = rest.match(QTY_RE);
-  if (qtyMatch) {
-    quantity = parseQuantity(qtyMatch[1]);
-    rest = rest.slice(qtyMatch[0].length);
+  const leading = parseLeadingQuantity(rest);
+  if (leading) {
+    quantity = leading.qty;
+    rest = leading.rest;
   }
 
   // --- Unit ---
